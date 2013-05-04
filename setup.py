@@ -1,6 +1,9 @@
 from distutils.core import setup
 
-setup(
+###############################################################################
+###############################################################################
+
+setup (
     name='fx-bitstamp',
     version='0.0.1',
 
@@ -19,12 +22,15 @@ setup(
 
     install_requires=[
         'pyzmq>=13.1.0',
-        'requests>=1.2.0'
+        'requests>=1.2.0',
     ],
 
-    url='http://blackhan.ch/bitstamp',
-    license='GPL',
     author='hsk81',
+    license='GPLv3',
+    url='http://blackhan.ch/fx-bitstamp',
     author_email='hasan.karahan81@gmail.com',
-    description='An FX client trading BTC on the http://bitstamp.net exchange'
+    description='An FX client trading BTCs on Bitstamp.net'
 )
+
+###############################################################################
+###############################################################################

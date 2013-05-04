@@ -21,6 +21,9 @@ from datetime import datetime
 def get_arguments ():
 
     parser = argparse.ArgumentParser ()
+    parser.add_argument("-s", "--silent",
+        default=False, action="store_true",
+        help="skip CLI logging (default: %(default)s)")
     parser.add_argument("-p", "--poll-interval",
         default=1.250, type=float,
         help="seconds between ticker polls (default: %(default)s [s])")
@@ -39,7 +42,7 @@ def get_ticker (url):
     assert res.status_code == 200
     return res
 
-def loop (poll_interval, ticker_url):
+def loop (poll_interval, ticker_url, silent=True):
 
     last_ticker = None
     t0 = time.time ()
@@ -51,7 +54,7 @@ def loop (poll_interval, ticker_url):
         if not last_ticker or last_ticker.text != this_ticker.text:
 
             json = this_ticker.json ()
-            print ('[%s] %s' % (now, json))
+            if not silent: print ('[%s] %s' % (now, json))
             json['timestamp'] = now.timestamp ()
             socket.send_json (json)
 
@@ -72,7 +75,7 @@ if __name__ == "__main__":
     socket.bind (args.pub_address)
 
     try:
-        loop (args.poll_interval, args.ticker_url)
+        loop (args.poll_interval, args.ticker_url, silent=args.silent)
 
     except KeyboardInterrupt:
         pass
