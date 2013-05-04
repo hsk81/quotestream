@@ -26,5 +26,5 @@ setup(
     license='GPL',
     author='hsk81',
     author_email='hasan.karahan81@gmail.com',
-    description='An FX client trading BTC on http://bitstamp.net'
+    description='An FX client trading BTC on the http://bitstamp.net exchange'
 )
