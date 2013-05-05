@@ -44,9 +44,7 @@ def get_arguments ():
 
 def get_tick (url):
 
-    res = req.get (url)
-    assert res.status_code == 200
-    return res
+    res = req.get (url); return res if res.status_code == 200 else None
 
 def loop (socket, poll_interval, ticker_url, silent=True):
 
@@ -55,17 +53,19 @@ def loop (socket, poll_interval, ticker_url, silent=True):
 
     while True:
         this_tick = get_tick (ticker_url)
-        timestamp = time.time ()
-        now = datetime.fromtimestamp (timestamp)
+        if this_tick:
 
-        if not last_tick or last_tick.text != this_tick.text:
+            timestamp = time.time ()
+            now = datetime.fromtimestamp (timestamp)
+            if not last_tick or last_tick.text != this_tick.text:
 
-            tick = this_tick.json ()
-            if not silent: print ('[%s] %s' % (now, tick))
-            tick['timestamp'] = timestamp
-            socket.send_json (tick)
+                tick = this_tick.json ()
+                if not silent: print ('[%s] %s' % (now, tick))
+                tick['timestamp'] = timestamp
+                socket.send_json (tick)
 
-        last_tick = this_tick
+            last_tick = this_tick
+
         dt = poll_interval - (time.time () - t0)
         if dt > 0.000: time.sleep (dt)
         t0 = time.time ()
