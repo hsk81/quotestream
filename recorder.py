@@ -18,10 +18,10 @@ from datetime import datetime
 
 def get_arguments ():
 
-    parser = argparse.ArgumentParser (
-        description="Records ticks to which it's subscribed to into a file. "
-                    "If previous records exists then the new ticks are "
-                    "appended at the end of the file.")
+    parser = argparse.ArgumentParser (description=
+        "Records ticks to which it's subscribed to into a file. If previous "
+        "records exists then the new ticks are appended at the end of the "
+        "file.")
 
     parser.add_argument ("-s", "--silent",
         default=False, action="store_true",

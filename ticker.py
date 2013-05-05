@@ -20,13 +20,12 @@ from datetime import datetime
 
 def get_arguments ():
 
-    parser = argparse.ArgumentParser (
-        description="Polls exchange for new ticks. The poll interval limits "
-                    "the maximum possible tick resolution, so keeping it as "
-                    "low as possible is desired. But since the exchange does "
-                    "impose a request limit per time unit it's not possible "
-                    "to poll beyond that cap (without getting banned). The "
-                    "ticks are published for further processing.")
+    parser = argparse.ArgumentParser (description=
+        "Polls exchange for new ticks. The poll interval limits the maximum "
+        "possible tick resolution, so keeping it as low as possible is "
+        "desired. But since the exchange does impose a request limit per time "
+        "unit it's not possible to poll beyond that cap (without getting "
+        "banned). The ticks are published for further processing.")
 
     parser.add_argument ("-s", "--silent",
         default=False, action="store_true",
@@ -56,13 +55,14 @@ def loop (socket, poll_interval, ticker_url, silent=True):
 
     while True:
         this_tick = get_tick (ticker_url)
-        now = datetime.now ()
+        timestamp = time.time ()
+        now = datetime.fromtimestamp (timestamp)
 
         if not last_tick or last_tick.text != this_tick.text:
 
             tick = this_tick.json ()
             if not silent: print ('[%s] %s' % (now, tick))
-            tick['timestamp'] = now.timestamp ()
+            tick['timestamp'] = timestamp
             socket.send_json (tick)
 
         last_tick = this_tick
