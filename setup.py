@@ -21,6 +21,8 @@ setup (
     ],
 
     install_requires=[
+        'argparse>=1.2.1',
+        'ipython>=0.13.2',
         'pyzmq>=13.1.0',
         'requests>=1.2.0',
     ],
