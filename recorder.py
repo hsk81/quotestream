@@ -26,7 +26,7 @@ def get_arguments ():
     parser.add_argument ("-s", "--silent",
         default=False, action="store_true",
         help="skip CLI logging (default: %(default)s)")
-    parser.add_argument ("-a", "--sub-address",
+    parser.add_argument ("-sub", "--sub-address",
         default='tcp://127.0.0.1:8178',
         help="ticker subscription address (default: %(default)s)")
     parser.add_argument ("-f", "--filename",
