@@ -28,16 +28,16 @@ def get_arguments ():
         default=False, action="store_true",
         help="skip CLI logging (default: %(default)s)")
     parser.add_argument ("-sub", "--sub-address",
-        default='tcp://127.0.0.1:8178',
+        default='tcp://127.0.0.1:8888',
         help="ticker subscription address (default: %(default)s)")
     parser.add_argument ("-pub", "--pub-address",
-        default='tcp://*:7881',
+        default='tcp://*:9999',
         help="ticker publication address (default: %(default)s)")
     parser.add_argument ("-dT", "--interval",
         default=1.000, type=float,
         help="homogeneity interval (default: %(default)s [s])")
     parser.add_argument ("-a", "--ema-decay",
-        default=0.500, type=float, ## 1: no memory, 0: infinite memory
+        default=1.000, type=float, ## 1: no memory, 0: infinite memory
         help="EMA decay: 0.0 - 1.0 (default: %(default)s)")
 
     return parser.parse_args ()

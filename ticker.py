@@ -21,7 +21,7 @@ from datetime import datetime
 def get_arguments ():
 
     parser = argparse.ArgumentParser (description=
-        "Polls exchange for new ticks. The poll interval limits the maximum "
+        "Polls exchange for new ticks: The poll interval limits the maximum "
         "possible tick resolution, so keeping it as low as possible is "
         "desired. But since the exchange does impose a request limit per time "
         "unit it's not possible to poll beyond that cap (without getting "
@@ -34,7 +34,7 @@ def get_arguments ():
         default=1.250, type=float,
         help="seconds between ticker polls (default: %(default)s [s])")
     parser.add_argument ("-pub", "--pub-address",
-        default='tcp://*:8178',
+        default='tcp://*:8888',
         help="ticker publication address (default: %(default)s)")
     parser.add_argument ("-u", "--ticker-url",
         default='https://www.bitstamp.net/api/ticker/',
@@ -76,7 +76,6 @@ def loop (socket, poll_interval, ticker_url, silent=True):
 if __name__ == "__main__":
 
     args = get_arguments ()
-
     context = zmq.Context (1)
     socket = context.socket (zmq.PUB)
     socket.bind (args.pub_address)
@@ -84,11 +83,8 @@ if __name__ == "__main__":
     try:
         loop (socket, args.poll_interval, args.ticker_url, silent=args.silent)
 
-    except KeyboardInterrupt:
-        pass
-
-    finally:
-        socket.close ()
+    except KeyboardInterrupt: pass
+    finally: socket.close ()
 
 ###############################################################################
 ###############################################################################

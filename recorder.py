@@ -27,7 +27,7 @@ def get_arguments ():
         default=False, action="store_true",
         help="skip CLI logging (default: %(default)s)")
     parser.add_argument ("-sub", "--sub-address",
-        default='tcp://127.0.0.1:8178',
+        default='tcp://127.0.0.1:8888',
         help="ticker subscription address (default: %(default)s)")
     parser.add_argument ("-f", "--filename",
         default='log/ticks.log',
@@ -41,7 +41,7 @@ def loop (socket, filename, silent=True):
 
         while True:
             tick = socket.recv_json ()
-            file.write (str (tick) + '\n')
+            file.write (str (tick).replace ("'", '"') + '\n')
             file.flush ()
 
             if not silent:
@@ -54,8 +54,8 @@ def loop (socket, filename, silent=True):
 if __name__ == "__main__":
 
     args = get_arguments ()
-
     context = zmq.Context (1)
+
     socket = context.socket (zmq.SUB)
     socket.connect (args.sub_address)
     socket.setsockopt_string (zmq.SUBSCRIBE, '')
@@ -63,11 +63,8 @@ if __name__ == "__main__":
     try:
         loop (socket, args.filename, silent=args.silent)
 
-    except KeyboardInterrupt:
-        pass
-
-    finally:
-        socket.close ()
+    except KeyboardInterrupt: pass
+    finally: socket.close ()
 
 ###############################################################################
 ###############################################################################
