@@ -33,9 +33,9 @@ def get_arguments ():
     parser.add_argument ("-pub", "--pub-address",
         default='tcp://*:7881',
         help="ticker publication address (default: %(default)s)")
-    parser.add_argument ("-dT", "--pub-interval",
+    parser.add_argument ("-dT", "--interval",
         default=1.000, type=float,
-        help="publication interval (default: %(default)s [s])")
+        help="homogeneity interval (default: %(default)s [s])")
 
     return parser.parse_args ()
 
@@ -74,7 +74,7 @@ ticks = Stack (size=2)
 ###############################################################################
 ###############################################################################
 
-def sub_side (context, sub_address, silent):
+def sub_side (context, sub_address, silent=True):
 
     def loop (socket):
 
@@ -91,7 +91,7 @@ def sub_side (context, sub_address, silent):
     try: loop (socket)
     finally: socket.close ()
 
-def pub_side (context, pub_address, interval, silent):
+def pub_side (context, pub_address, interval, silent=True):
 
     def loop (socket):
         curr_tick = None
