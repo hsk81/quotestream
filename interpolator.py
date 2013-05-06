@@ -36,6 +36,9 @@ def get_arguments ():
     parser.add_argument ("-dT", "--interval",
         default=1.000, type=float,
         help="homogeneity interval (default: %(default)s [s])")
+    parser.add_argument ("-a", "--ema-decay",
+        default=0.500, type=float, ## 1: no memory, 0: infinite memory
+        help="EMA decay: 0.0 - 1.0 (default: %(default)s)")
 
     return parser.parse_args ()
 
@@ -69,20 +72,40 @@ class Stack (object):
         with self._lock:
             return self._list[0] if len (self._list) > 0 else default
 
-ticks = Stack (size=2)
+stack = Stack (size=1)
 
 ###############################################################################
 ###############################################################################
 
-def sub_side (context, sub_address, silent=True):
+def sub_side (context, sub_address, ema_decay, silent=True):
 
-    def loop (socket):
+    def loop(socket):
+
+        curr_tick = None
+        curr_time = None
+        curr_speed = 1.0
 
         while True:
+            last_tick = curr_tick
+            last_time = curr_time or datetime.now ()
+            last_speed = curr_speed
+
             curr_tick = socket.recv_json ()
-            ticks.put (curr_tick)
-            if not silent: print ('[%s] %s' % (
-                datetime.fromtimestamp (curr_tick['timestamp']), curr_tick))
+            curr_time = datetime.now ()
+            curr_ts = datetime.fromtimestamp (curr_tick['timestamp'])
+
+            if last_tick:
+                last_ts = datetime.fromtimestamp (last_tick['timestamp'])
+                real = (curr_ts - last_ts).total_seconds ()
+                simu = (curr_time - last_time).total_seconds ()
+
+                curr_speed = \
+                    ema_decay * simu / real + (1.0 - ema_decay) * last_speed
+
+            if not silent:
+                print('[%s] %s => %.3f' % (curr_ts, curr_tick, curr_speed))
+
+            stack.put ((curr_tick, curr_speed))
 
     socket = context.socket (zmq.SUB)
     socket.connect (sub_address)
@@ -99,13 +122,13 @@ def pub_side (context, pub_address, interval, silent=True):
 
         while True:
             last_tick = curr_tick
-            curr_tick = ticks.top (default=last_tick)
+            curr_tick, curr_speed = stack.top (default=(last_tick, 1.0))
 
             if curr_tick:
                 socket.send_json (curr_tick)
                 if not silent: print ('<%s> %s' % (datetime.now (), curr_tick))
 
-            dt = interval - (time.time () - t0)
+            dt = interval * curr_speed - (time.time () - t0)
             if dt > 0.000: time.sleep (dt)
             t0 = time.time ()
 
@@ -124,7 +147,7 @@ if __name__ == "__main__":
     context = zmq.Context (2)
 
     sub_thread = Thread (target=sub_side, args=[context, args.sub_address,
-        args.silent])
+        args.ema_decay, args.silent])
     pub_thread = Thread (target=pub_side, args=[context, args.pub_address,
         args.interval, args.silent])
 
