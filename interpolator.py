@@ -37,7 +37,7 @@ def get_arguments ():
         default=1.000, type=float,
         help="homogeneity interval (default: %(default)s [s])")
     parser.add_argument ("-a", "--ema-decay",
-        default=1.000, type=float, ## 1: no memory, 0: infinite memory
+        default=0.500, type=float, ## 1: no memory, 0: infinite memory
         help="EMA decay: 0.0 - 1.0 (default: %(default)s)")
 
     return parser.parse_args ()
