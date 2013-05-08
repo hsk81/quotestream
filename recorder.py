@@ -27,7 +27,7 @@ def get_arguments ():
         default=False, action="store_true",
         help="skip CLI logging (default: %(default)s)")
     parser.add_argument ("-sub", "--sub-address",
-        default='tcp://127.0.0.1:8888',
+        default='tcp://127.0.0.1:7000',
         help="ticker subscription address (default: %(default)s)")
     parser.add_argument ("-f", "--filename",
         default='log/ticks.log',

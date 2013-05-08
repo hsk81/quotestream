@@ -28,10 +28,10 @@ def get_arguments ():
         default=False, action="store_true",
         help="skip CLI logging (default: %(default)s)")
     parser.add_argument ("-sub", "--sub-address",
-        default='tcp://127.0.0.1:8888',
+        default='tcp://127.0.0.1:7000',
         help="ticker subscription address (default: %(default)s)")
     parser.add_argument ("-pub", "--pub-address",
-        default='tcp://*:9999',
+        default='tcp://*:7001',
         help="ticker publication address (default: %(default)s)")
     parser.add_argument ("-dT", "--interval",
         default=1.000, type=float,

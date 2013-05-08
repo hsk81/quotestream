@@ -41,7 +41,7 @@ def get_arguments ():
         default=1.000, type=float,
         help="time acceleration factor (default: %(default)s)")
     parser.add_argument ("-pub", "--pub-address",
-        default='tcp://*:8888',
+        default='tcp://*:7000',
         help="ticker publication address (default: %(default)s)")
 
     return parser.parse_args ()
