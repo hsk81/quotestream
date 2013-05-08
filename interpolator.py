@@ -103,7 +103,7 @@ def sub_side (context, sub_address, ema_decay, silent=True):
                     ema_decay * simu / real + (1.0 - ema_decay) * last_speed
 
             if not silent:
-                print('[%s] %s => %.3f' % (curr_ts, curr_tick, curr_speed))
+                print('<%s> %s => %.3f' % (curr_ts, curr_tick, curr_speed))
 
             stack.put ((curr_tick, curr_speed))
 
@@ -126,7 +126,9 @@ def pub_side (context, pub_address, interval, silent=True):
 
             if curr_tick:
                 socket.send_json (curr_tick)
-                if not silent: print ('<%s> %s' % (datetime.now (), curr_tick))
+                if not silent:
+                    now = datetime.fromtimestamp (curr_tick['timestamp'])
+                    print ('[%s] %s' % (now, curr_tick))
 
             dt = interval * curr_speed - (time.time () - t0)
             if dt > 0.000: time.sleep (dt)
