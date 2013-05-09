@@ -47,16 +47,24 @@ def get_arguments () -> argparse.Namespace:
 
 def next_response (url: str) -> req.Response:
 
-    res = req.get (url); return res if res.status_code == 200 else None
+    try: res = req.get (url); return res if res.status_code == 200 \
+        else None
 
-def loop (out_keys: list, map_to: dict, interval: float, url: str,
+    except KeyboardInterrupt:
+        raise
+
+    except Exception as ex:
+        print (ex, file=sys.stderr); return None
+
+def loop (map_to: dict, out_keys: list, interval: float, url: str,
           verbose: bool=False) -> None:
 
-    def mapped (key: str) -> str:
-        return map_to[key] if key in map_to else key
+    def mapped (key: str, maps: dict) -> str:
+        return maps[key] if key in maps else key
 
-    def select (tick: dict) -> dict: return {
-        mapped (k): v for k, v in tick.items () if mapped (k) in out_keys
+    def select (tick: dict, maps: dict, keys: list=None) -> dict: return {
+        mapped (k, maps=maps): v for k, v in tick.items ()
+        if not keys or mapped (k, maps=maps) in keys
     }
 
     t0 = time.time ()
@@ -69,11 +77,11 @@ def loop (out_keys: list, map_to: dict, interval: float, url: str,
 
                 inp_tick = curr_response.json ()
                 inp_tick['timestamp'] = time.time ()
-                out_tick = select (inp_tick)
+                out_tick = select (inp_tick, map_to, keys=out_keys)
 
                 if verbose:
                     now = datetime.fromtimestamp (inp_tick['timestamp'])
-                    print ('[%s] %s' % (now, out_tick), file=sys.stderr)
+                    print ('[%s] %s' % (now, inp_tick), file=sys.stderr)
 
                 print (out_tick, file=sys.stdout); sys.stdout.flush ()
             last_response = curr_response
@@ -90,7 +98,9 @@ if __name__ == "__main__":
     args = get_arguments ()
     args.map_to = dict (args.map_to)
 
-    try: loop (args.out_keys, args.map_to, args.interval, args.url,
+    try: loop (
+        args.map_to, args.out_keys,
+        args.interval, args.url,
         verbose=args.verbose)
 
     except KeyboardInterrupt:
