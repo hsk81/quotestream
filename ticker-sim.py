@@ -72,7 +72,7 @@ def loop (out_keys: list, out_maps: dict,
 
         tick = select (curr_tick)
         if verbose: print ('[%s] %s' % (now, tick), file=sys.stderr)
-        print (tick, file=sys.stdout)
+        print (tick, file=sys.stdout); sys.stdout.flush ()
 
 ###############################################################################
 ###############################################################################

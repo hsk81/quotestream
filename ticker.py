@@ -75,7 +75,7 @@ def loop (out_keys: list, map_to: dict, interval: float, url: str,
                     now = datetime.fromtimestamp (inp_tick['timestamp'])
                     print ('[%s] %s' % (now, out_tick), file=sys.stderr)
 
-                print (out_tick, file=sys.stdout)
+                print (out_tick, file=sys.stdout); sys.stdout.flush ()
             last_response = curr_response
 
         dt = interval - (time.time () - t0)
