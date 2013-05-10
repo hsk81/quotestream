@@ -8,11 +8,12 @@ __author__ = 'hsk81'
 ###############################################################################
 ###############################################################################
 
+import ujson as JSON
 import argparse
 import time
-import zmq
+import sys
 
-from datetime import datetime
+from datetime import datetime, timedelta
 from threading import Thread, Lock
 
 ###############################################################################
@@ -24,21 +25,16 @@ def get_arguments ():
         "Transforms an inhomogeneous time series to a homogeneous one by "
         "re-delivering the most recent tick in regular intervals.")
 
-    parser.add_argument ("-s", "--silent",
+    parser.add_argument ("-v", "--verbose",
         default=False, action="store_true",
-        help="skip CLI logging (default: %(default)s)")
-    parser.add_argument ("-sub", "--sub-address",
-        default='tcp://127.0.0.1:7000',
-        help="ticker subscription address (default: %(default)s)")
-    parser.add_argument ("-pub", "--pub-address",
-        default='tcp://*:7001',
-        help="ticker publication address (default: %(default)s)")
-    parser.add_argument ("-dT", "--interval",
+        help="verbose logging (default: %(default)s)")
+    parser.add_argument ("-i", "--interval",
         default=1.000, type=float,
         help="homogeneity interval (default: %(default)s [s])")
     parser.add_argument ("-a", "--ema-decay",
-        default=0.618, type=float, ## 1: no memory, 0: infinite memory
-        help="EMA decay: 0.0 - 1.0 (default: %(default)s)")
+        default=0.618, type=float,
+        help="EMA decay between 0.0 'infinite memory' and 1.0 'no memory' "
+             "(default: %(default)s)")
 
     return parser.parse_args ()
 
@@ -77,68 +73,56 @@ stack = Stack (size=1)
 ###############################################################################
 ###############################################################################
 
-def sub_side (context, sub_address, ema_decay, silent=True):
+def sub_side (ema_decay, verbose=False):
 
-    def loop(socket):
+    curr_siac = 1.0
+    curr_tick = None
+    curr_tick_time = timedelta (0)
+    curr_real_time = datetime.min
 
-        curr_tick = None
-        curr_time = None
-        curr_speed = 1.0
+    for line in sys.stdin:
 
-        while True:
-            last_tick = curr_tick
-            last_time = curr_time or datetime.now ()
-            last_speed = curr_speed
+        last_tick = curr_tick
+        last_real_time = curr_real_time
+        last_tick_time = curr_tick_time
 
-            curr_tick = socket.recv_json ()
-            curr_time = datetime.now ()
-            curr_ts = datetime.fromtimestamp (curr_tick['timestamp'])
+        curr_tick = JSON.decode (line.replace ("'", '"'))
+        curr_tick_time = datetime.fromtimestamp (curr_tick['timestamp'])
+        curr_real_time = datetime.now ()
 
-            if last_tick:
-                last_ts = datetime.fromtimestamp (last_tick['timestamp'])
-                real = (curr_ts - last_ts).total_seconds ()
-                simu = (curr_time - last_time).total_seconds ()
+        if last_tick:
+            ## numerator: difference *measured* between ticks
+            n = (curr_real_time - last_real_time).total_seconds ()
+            ## denominator: difference *timestamped* between ticks
+            d = (curr_tick_time - last_tick_time).total_seconds ()
 
-                curr_speed = \
-                    ema_decay * simu / real + (1.0 - ema_decay) * last_speed
+            last_siac = curr_siac ## simulation acceleration
+            curr_siac = ema_decay * n / d + (1.0 - ema_decay) * last_siac
 
-            if not silent:
-                print('<%s> %s => %.3f' % (curr_ts, curr_tick, curr_speed))
+        if verbose: print ('<%s> %s => %.3f' %
+            (curr_tick_time, curr_tick, curr_siac), file=sys.stderr)
 
-            stack.put ((curr_tick, curr_speed))
+        stack.put ((curr_tick, curr_siac))
+    stack.put ((curr_tick, 0.0))
 
-    socket = context.socket (zmq.SUB)
-    socket.connect (sub_address)
-    socket.setsockopt_string (zmq.SUBSCRIBE, '')
+def pub_side (interval, verbose=False):
 
-    try: loop (socket)
-    finally: socket.close ()
+    curr_tick, curr_siac = None, 1.0
+    t0 = time.time ()
 
-def pub_side (context, pub_address, interval, silent=True):
+    while curr_siac > 0.0:
+        last_tick, last_siac = curr_tick, curr_siac
+        curr_tick, curr_siac = stack.top (default=(last_tick, last_siac))
 
-    def loop (socket):
-        curr_tick = None
+        if curr_tick:
+            if verbose: print ('[%s] %s' %
+                (datetime.fromtimestamp (t0), curr_tick), file=sys.stderr)
+
+            print (curr_tick, file=sys.stdout); sys.stdout.flush ()
+
+        dt = interval * curr_siac - (time.time () - t0)
+        if dt > 0.000: time.sleep (dt)
         t0 = time.time ()
-
-        while True:
-            last_tick = curr_tick
-            curr_tick, curr_speed = stack.top (default=(last_tick, 1.0))
-
-            if curr_tick:
-                socket.send_json (curr_tick)
-                if not silent:
-                    now = datetime.fromtimestamp (curr_tick['timestamp'])
-                    print ('[%s] %s' % (now, curr_tick))
-
-            dt = interval * curr_speed - (time.time () - t0)
-            if dt > 0.000: time.sleep (dt)
-            t0 = time.time ()
-
-    socket = context.socket (zmq.PUB)
-    socket.bind (pub_address)
-
-    try: loop (socket)
-    finally: socket.close ()
 
 ###############################################################################
 ###############################################################################
@@ -146,16 +130,13 @@ def pub_side (context, pub_address, interval, silent=True):
 if __name__ == "__main__":
 
     args = get_arguments ()
-    context = zmq.Context (2)
 
-    sub_thread = Thread (target=sub_side, args=[context, args.sub_address,
-        args.ema_decay, args.silent])
-    pub_thread = Thread (target=pub_side, args=[context, args.pub_address,
-        args.interval, args.silent])
-
+    sub_thread = Thread (target=sub_side, args=[args.ema_decay, args.verbose])
     sub_thread.daemon = True
-    sub_thread.start ()
+    pub_thread = Thread (target=pub_side, args=[args.interval, args.verbose])
     pub_thread.daemon = True
+
+    sub_thread.start ()
     pub_thread.start ()
 
     try: pub_thread.join ()
