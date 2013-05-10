@@ -8,7 +8,11 @@ __author__ = 'hsk81'
 ###############################################################################
 ###############################################################################
 
+import ujson as JSON
 import argparse
+import sys
+
+from datetime import datetime
 
 ###############################################################################
 ###############################################################################
@@ -17,8 +21,8 @@ def get_arguments () -> argparse.Namespace:
 
     parser = argparse.ArgumentParser (description=
         "Includes or excludes keys: If no include is provided then *all* keys "
-        "are kept except the explicitly excluded which cannot be re-included, "
-        "i.e. exclude has precedence over include.")
+        "are kept except the explicitly excluded. It is not possible to apply "
+        "the include *and* exclude operations simultaneously.")
 
     parser.add_argument ("-v", "--verbose",
         default=False, action="store_true",
@@ -34,7 +38,20 @@ def get_arguments () -> argparse.Namespace:
 
 def loop (include_keys: list, exclude_keys: list, verbose: bool=False) -> None:
 
-    pass ## TODO
+    for line in sys.stdin:
+        tick = JSON.loads (line.replace ("'", '"'))
+
+        if verbose:
+            now = datetime.fromtimestamp (tick['timestamp'])
+            print ('[%s] %s' % (now, tick), file=sys.stderr)
+
+        if len (exclude_keys) > 0:
+            for key in exclude_keys: del tick[key]
+
+        if len (include_keys) > 0:
+            tick = {key: tick[key] for key in include_keys}
+
+        print (tick, file=sys.stdout); sys.stdout.flush ()
 
 ###############################################################################
 ###############################################################################
