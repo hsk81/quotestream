@@ -10,7 +10,6 @@ __author__ = 'hsk81'
 
 import ujson as JSON
 import argparse
-import math
 import sys
 
 from functools import reduce
@@ -22,39 +21,43 @@ from datetime import datetime
 def get_arguments () -> argparse.Namespace:
 
     parser = argparse.ArgumentParser (description=
-        "Calculates the logarithm of a square root of a multiplication of two "
-        "numbers. It is possible to apply this function on multiple keys "
-        "simultaneously.")
+        "Calculates the difference of corresponding key values between ticks. "
+        "It is possible to apply this function on more than one key at the "
+        "same time.")
 
     parser.add_argument ("-v", "--verbose",
         default=False, action="store_true",
         help="verbose logging (default: %(default)s)")
-    parser.add_argument ("-l", "--in-keys-lhs", action='append',
+    parser.add_argument ("-i", "--in-keys", action='append',
         default=[], nargs='+',
-        help="left hand side input keys (default: %(default)s)")
-    parser.add_argument ("-r", "--in-keys-rhs", action='append',
-        default=[], nargs='+',
-        help="right hand side input keys (default: %(default)s)")
+        help="input keys (default: %(default)s)")
     parser.add_argument ("-o", "--out-keys", action='append',
         default=[], nargs='+',
         help="output keys (default: %(default)s)")
 
     return parser.parse_args ()
 
-def loop (in_keys_lhs: list, in_keys_rhs: list, out_keys: list,
-          verbose: bool=False) -> None:
+def loop (in_keys: list, out_keys: list, verbose: bool=False) -> None:
+
+    curr_tick = None
+    curr_values = None
 
     for line in sys.stdin:
-        tick = JSON.decode (line.replace ("'", '"'))
 
-        for l, r, k in zip (in_keys_lhs, in_keys_rhs, out_keys):
-            tick[k] = math.log (math.sqrt (float (tick[l]) * float (tick[r])))
+        last_tick = curr_tick
+        last_values = curr_values
+        curr_tick = JSON.decode (line.replace ("'", '"'))
+        curr_values = [float (curr_tick[key]) for key in in_keys]
 
-        if verbose:
-            now = datetime.fromtimestamp (tick['timestamp'])
-            print ('[%s] %s' % (now, tick), file=sys.stderr)
+        if last_tick:
+            for curr, last, key in zip (curr_values, last_values, out_keys):
+                curr_tick[key] = curr - last
 
-        print (tick, file=sys.stdout); sys.stdout.flush ()
+            if verbose:
+                now = datetime.fromtimestamp (curr_tick['timestamp'])
+                print ('[%s] %s' % (now, curr_tick), file=sys.stderr)
+
+            print (curr_tick, file=sys.stdout)
 
 ###############################################################################
 ###############################################################################
@@ -62,15 +65,11 @@ def loop (in_keys_lhs: list, in_keys_rhs: list, out_keys: list,
 if __name__ == "__main__":
 
     args = get_arguments ()
-    args.in_keys_lhs = list (reduce (lambda a, b: a + b, args.in_keys_lhs, []))
-    args.in_keys_rhs = list (reduce (lambda a, b: a + b, args.in_keys_rhs, []))
+    args.in_keys = list (reduce (lambda a, b: a + b, args.in_keys, []))
     args.out_keys = list (reduce (lambda a, b: a + b, args.out_keys, []))
 
-    try: loop (args.in_keys_lhs, args.in_keys_rhs, args.out_keys,
-        verbose=args.verbose)
-
-    except KeyboardInterrupt:
-        pass
+    try: loop (args.in_keys, args.out_keys, verbose=args.verbose)
+    except KeyboardInterrupt: pass
 
 ###############################################################################
 ###############################################################################
