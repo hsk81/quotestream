@@ -24,15 +24,10 @@ def get_arguments ():
         "(of the most recent transaction) is used instead of the *calculated* "
         "`price` (based on the most recent bid/ask pair).")
 
-    parser.add_argument ("-s", "--silent",
+    parser.add_argument ("-v", "--verbose",
         default=False, action="store_true",
-        help="skip CLI logging (default: %(default)s)")
-    parser.add_argument ("-sub", "--sub-address",
-        default='tcp://127.0.0.1:7002',
-        help="ticker subscription address (default: %(default)s)")
-    parser.add_argument ("-pub", "--pub-address",
-        default='tcp://*:7003',
-        help="ticker publication address (default: %(default)s)")
+        help="verbose logging (default: %(default)s)")
+
     parser.add_argument ("-k", "--key-name",
         default='last', choices=['last', 'price'],
         help="value to base the returns on (default: %(default)s)")
@@ -68,23 +63,12 @@ def loop (sub_socket, pub_socket, key_name, silent=True):
 if __name__ == "__main__":
 
     args = get_arguments ()
-    context = zmq.Context (1)
-
-    sub_socket = context.socket (zmq.SUB)
-    sub_socket.connect (args.sub_address)
-    sub_socket.setsockopt_string (zmq.SUBSCRIBE, '')
-    pub_socket = context.socket (zmq.PUB)
-    pub_socket.bind (args.pub_address)
 
     try:
-        loop (sub_socket, pub_socket, args.key_name, silent=args.silent)
+        loop (args.key_name, silent=args.silent)
 
     except KeyboardInterrupt:
         pass
-
-    finally:
-        sub_socket.close ()
-        pub_socket.close ()
 
 ###############################################################################
 ###############################################################################
