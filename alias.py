@@ -39,7 +39,7 @@ def get_arguments () -> argparse.Namespace:
 def loop (copy_map: dict, move_map: dict, verbose: bool=False) -> None:
 
     for line in sys.stdin:
-        tick = JSON.loads (line.replace ("'", '"'))
+        tick = JSON.decode (line.replace ("'", '"'))
 
         for source_key, target_key in copy_map.items ():
             tick[target_key] = tick[source_key]

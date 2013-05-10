@@ -47,7 +47,7 @@ def loop (from_date: datetime, till_date: datetime, acceleration: float,
     for line in sys.stdin:
 
         last_tick = curr_tick
-        curr_tick = JSON.loads (line.replace ("'", '"'))
+        curr_tick = JSON.decode (line.replace ("'", '"'))
 
         now = datetime.fromtimestamp (curr_tick['timestamp'])
         if from_date and from_date > now: continue

@@ -39,7 +39,7 @@ def get_arguments () -> argparse.Namespace:
 def loop (include_keys: list, exclude_keys: list, verbose: bool=False) -> None:
 
     for line in sys.stdin:
-        tick = JSON.loads (line.replace ("'", '"'))
+        tick = JSON.decode (line.replace ("'", '"'))
 
         if verbose:
             now = datetime.fromtimestamp (tick['timestamp'])
