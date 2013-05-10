@@ -30,12 +30,6 @@ def get_arguments () -> argparse.Namespace:
     parser.add_argument ('-v', '--verbose',
         default=False, action='store_true',
         help='verbose logging (default: %(default)s)')
-    parser.add_argument ('-o', '--out-keys',
-        default=['timestamp', 'bid', 'ask', 'price', 'high', 'low', 'volume'],
-        nargs='+', help='output keys (default: %(default)s)')
-    parser.add_argument ('-m', '--map-to', action='append',
-        default=[('last', 'price')],
-        nargs='+', help='output maps (default: %(default)s)')
     parser.add_argument ('-i', '--interval',
         default=1.250, type=float,
         help='seconds between polls (default: %(default)s [s])')
@@ -56,16 +50,7 @@ def next_response (url: str) -> req.Response:
     except Exception as ex:
         print (ex, file=sys.stderr); return None
 
-def loop (map_to: dict, out_keys: list, interval: float, url: str,
-          verbose: bool=False) -> None:
-
-    def mapped (key: str, maps: dict) -> str:
-        return maps[key] if key in maps else key
-
-    def select (tick: dict, maps: dict, keys: list=None) -> dict: return {
-        mapped (k, maps=maps): v for k, v in tick.items ()
-        if not keys or mapped (k, maps=maps) in keys
-    }
+def loop (interval: float, url: str, verbose: bool=False) -> None:
 
     t0 = time.time ()
     last_response = None
@@ -75,15 +60,14 @@ def loop (map_to: dict, out_keys: list, interval: float, url: str,
         if curr_response:
             if not last_response or last_response.text != curr_response.text:
 
-                inp_tick = curr_response.json ()
-                inp_tick['timestamp'] = time.time ()
-                out_tick = select (inp_tick, map_to, keys=out_keys)
+                tick = curr_response.json ()
+                tick['timestamp'] = time.time ()
 
                 if verbose:
-                    now = datetime.fromtimestamp (inp_tick['timestamp'])
-                    print ('[%s] %s' % (now, inp_tick), file=sys.stderr)
+                    now = datetime.fromtimestamp (tick['timestamp'])
+                    print ('[%s] %s' % (now, tick), file=sys.stderr)
 
-                print (out_tick, file=sys.stdout); sys.stdout.flush ()
+                print (tick, file=sys.stdout); sys.stdout.flush ()
             last_response = curr_response
 
         dt = interval - (time.time () - t0)
@@ -96,15 +80,8 @@ def loop (map_to: dict, out_keys: list, interval: float, url: str,
 if __name__ == "__main__":
 
     args = get_arguments ()
-    args.map_to = dict (args.map_to)
-
-    try: loop (
-        args.map_to, args.out_keys,
-        args.interval, args.url,
-        verbose=args.verbose)
-
-    except KeyboardInterrupt:
-        pass
+    try: loop (args.interval, args.url, verbose=args.verbose)
+    except KeyboardInterrupt: pass
 
 ###############################################################################
 ###############################################################################

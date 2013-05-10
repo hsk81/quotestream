@@ -8,7 +8,11 @@ __author__ = 'hsk81'
 ###############################################################################
 ###############################################################################
 
+import ujson as JSON
 import argparse
+import sys
+
+from datetime import datetime
 
 ###############################################################################
 ###############################################################################
@@ -34,7 +38,21 @@ def get_arguments () -> argparse.Namespace:
 
 def loop (copy_map: dict, move_map: dict, verbose: bool=False) -> None:
 
-    pass ## TODO
+    for line in sys.stdin:
+        tick = JSON.loads (line.replace ("'", '"'))
+
+        if verbose:
+            now = datetime.fromtimestamp (tick['timestamp'])
+            print ('[%s] %s' % (now, tick), file=sys.stderr)
+
+        for source_key, target_key in copy_map.items ():
+            tick[target_key] = tick[source_key]
+
+        for source_key, target_key in move_map.items ():
+            tick[target_key] = tick[source_key]
+            del tick[source_key]
+
+        print (tick, file=sys.stdout)
 
 ###############################################################################
 ###############################################################################
