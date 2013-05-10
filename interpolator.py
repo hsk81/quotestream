@@ -19,7 +19,7 @@ from threading import Thread, Lock
 ###############################################################################
 ###############################################################################
 
-def get_arguments ():
+def get_arguments () -> argparse.Namespace:
 
     parser = argparse.ArgumentParser (description=
         "Transforms an inhomogeneous time series to a homogeneous one by "
@@ -43,13 +43,13 @@ def get_arguments ():
 
 class Stack (object):
 
-    def __init__ (self, size=0):
+    def __init__ (self, size: int=0) -> None:
 
         self._lock = Lock ()
         self._list = []
         self._size = size
 
-    def put (self, item):
+    def put (self, item: object) -> None:
 
         with self._lock:
             if self._size > 0:
@@ -58,12 +58,12 @@ class Stack (object):
 
             self._list.insert (0, item)
 
-    def get (self, default=None):
+    def get (self, default: object=None) -> object:
 
         with self._lock:
             return self._list.pop (0) if len (self._list) > 0 else default
 
-    def top (self, default=None):
+    def top (self, default: object=None) -> object:
 
         with self._lock:
             return self._list[0] if len (self._list) > 0 else default
@@ -73,7 +73,7 @@ stack = Stack (size=1)
 ###############################################################################
 ###############################################################################
 
-def sub_side (ema_decay, verbose=False):
+def sub_side (ema_decay: float, verbose: bool=False) -> None:
 
     curr_siac = 1.0
     curr_tick = None
@@ -105,7 +105,7 @@ def sub_side (ema_decay, verbose=False):
         stack.put ((curr_tick, curr_siac))
     stack.put ((curr_tick, 0.0))
 
-def pub_side (interval, verbose=False):
+def pub_side (interval: float, verbose: bool=False) -> None:
 
     curr_tick, curr_siac = None, 1.0
     t0 = time.time ()
