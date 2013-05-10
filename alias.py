@@ -41,10 +41,6 @@ def loop (copy_map: dict, move_map: dict, verbose: bool=False) -> None:
     for line in sys.stdin:
         tick = JSON.loads (line.replace ("'", '"'))
 
-        if verbose:
-            now = datetime.fromtimestamp (tick['timestamp'])
-            print ('[%s] %s' % (now, tick), file=sys.stderr)
-
         for source_key, target_key in copy_map.items ():
             tick[target_key] = tick[source_key]
 
@@ -52,7 +48,11 @@ def loop (copy_map: dict, move_map: dict, verbose: bool=False) -> None:
             tick[target_key] = tick[source_key]
             del tick[source_key]
 
-        print (tick, file=sys.stdout)
+        if verbose:
+            now = datetime.fromtimestamp (tick['timestamp'])
+            print ('[%s] %s' % (now, tick), file=sys.stderr)
+
+        print (tick, file=sys.stdout); sys.stdout.flush ()
 
 ###############################################################################
 ###############################################################################
