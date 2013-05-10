@@ -10,6 +10,7 @@ __author__ = 'hsk81'
 
 import requests as req
 import argparse
+import syslog
 import time
 import sys
 
@@ -48,7 +49,7 @@ def next_response (url: str) -> req.Response:
         raise
 
     except Exception as ex:
-        print (ex, file=sys.stderr); return None
+        print (ex, file=sys.stderr); syslog.syslog (syslog.LOG_ERR, str (ex))
 
 def loop (interval: float, url: str, verbose: bool=False) -> None:
 
