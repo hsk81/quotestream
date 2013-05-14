@@ -37,10 +37,9 @@ def get_arguments (defaults: dict=frozenset ({})) -> argparse.Namespace:
     parser.add_argument ('-p', '--parameter', action='append', nargs='+',
         default=defaults['parameter'] if 'parameter' in defaults else [],
         help='function parameter(s) (default: %(default)s)')
-    parser.add_argument ('-n', '--stack-size', action='append', nargs='+',
+    parser.add_argument ('-n', '--stack-size', action='append', nargs='+', type=int,
         default=defaults['stack-size'] if 'stack-size' in defaults else [],
-        help='stack of previously seen values (default: %(default)s)',
-        type=int)
+        help='stack of previously seen values (default: %(default)s)')
     parser.add_argument ('-d', '--default', action='append', nargs='+',
         default=defaults['default'] if 'default' in defaults else [],
         help='default key *or* value (default: %(default)s)')

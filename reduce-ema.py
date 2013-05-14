@@ -15,11 +15,9 @@ from reduce import get_arguments, loop
 
 if __name__ == "__main__":
 
-    args = get_arguments ({
-        'stack-size': [[1]], 'function': [
-            [lambda curr, prev: float (curr) * 0.618 + float (prev) * 0.382]
-        ],
-    })
+    args = get_arguments ({'stack-size': [[1]], 'function': [
+        [lambda curr, prev: float (curr) * 0.618 + float (prev) * 0.382]
+    ]})
 
     if not all (args.default):
         for index, (d, p) in enumerate (zip (args.default, args.parameter)):
