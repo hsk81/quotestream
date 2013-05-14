@@ -29,10 +29,10 @@ def get_arguments () -> argparse.Namespace:
         help="verbose logging (default: %(default)s)")
     parser.add_argument ('-i', '--include-keys', action='append',
         default=[], nargs='+',
-        help='include keys (default: %(default)s)')
+        help='include key(s) (default: %(default)s)')
     parser.add_argument ('-e', '--exclude-keys', action='append',
         default=[], nargs='+',
-        help='exclude keys (default: %(default)s)')
+        help='exclude key(s) (default: %(default)s)')
 
     return parser.parse_args ()
 

@@ -41,34 +41,26 @@ def get_arguments () -> argparse.Namespace:
 ###############################################################################
 ###############################################################################
 
-class Stack (object):
+class ConcurrentStack (object):
 
     def __init__ (self, size: int=0) -> None:
 
         self._lock = Lock ()
-        self._list = []
         self._size = size
+        self._list = []
 
     def put (self, item: object) -> None:
 
         with self._lock:
-            if self._size > 0:
-                while len (self._list) >= self._size:
-                    self._list.pop ()
-
+            self._list[self._size - 1:] = []
             self._list.insert (0, item)
-
-    def get (self, default: object=None) -> object:
-
-        with self._lock:
-            return self._list.pop (0) if len (self._list) > 0 else default
 
     def top (self, default: object=None) -> object:
 
         with self._lock:
             return self._list[0] if len (self._list) > 0 else default
 
-stack = Stack (size=1)
+stack = ConcurrentStack (size=1)
 
 ###############################################################################
 ###############################################################################

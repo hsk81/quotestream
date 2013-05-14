@@ -29,10 +29,10 @@ def get_arguments () -> argparse.Namespace:
         help="verbose logging (default: %(default)s)")
     parser.add_argument ('-c', '--copy-key', action='append',
         default=[], nargs='+',
-        help='copy keys (default: %(default)s)')
+        help='key pair to copy from/to (default: %(default)s)')
     parser.add_argument ('-m', '--move-key', action='append',
         default=[], nargs='+',
-        help='move keys (default: %(default)s)')
+        help='key pair to move from/to (default: %(default)s)')
 
     return parser.parse_args ()
 
