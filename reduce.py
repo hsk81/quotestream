@@ -42,7 +42,7 @@ def get_arguments () -> argparse.Namespace:
         help='stack of previously seen values (default: %(default)s)')
     parser.add_argument ('-d', '--default', action='append',
         default=[], nargs='+',
-        help='default result(s) (default: %(default)s)')
+        help='default key *or* value (default: %(default)s)')
     parser.add_argument ('-r', '--result', action='append',
         default=[], nargs='+',
         help='result keys (default: %(default)s)')
@@ -91,10 +91,11 @@ def loop (functions: list, parameters: list, stack_sizes: list, defaults: list,
             stack.put (tick[parameter])
 
             if stack.full:
-                args = stack.all + [last[result] if last else default]
+                args = stack.all + [last[result] if last else tick[default]
+                    if default in tick else default]
                 tick[result] = eval (function.format (*args))
             else:
-                tick[result] = default
+                tick[result] = tick[default] if default in tick else default
 
         if verbose:
             now = datetime.fromtimestamp (tick['timestamp'])

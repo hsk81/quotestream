@@ -53,8 +53,9 @@ def loop (functions: list, parameter_groups: list, results: list,
 
         for item in zip (functions, parameter_groups, results):
             function, parameter_group, result = item
-            tick[result] = eval (function.format (*map (
-                lambda parameter: tick[parameter], parameter_group)))
+            args = map (lambda parameter: tick[parameter], parameter_group)
+            tick[result] = function (*args) if callable (function) \
+                else eval (function.format (*args))
 
         if verbose:
             now = datetime.fromtimestamp (tick['timestamp'])
