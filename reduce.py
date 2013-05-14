@@ -19,7 +19,7 @@ from numpy import *
 ###############################################################################
 ###############################################################################
 
-def get_arguments () -> argparse.Namespace:
+def get_arguments (defaults: dict=frozenset ({})) -> argparse.Namespace:
 
     parser = argparse.ArgumentParser (description=
         "Reduces a stack of previously seen parameter values using a function "
@@ -31,23 +31,43 @@ def get_arguments () -> argparse.Namespace:
     parser.add_argument ("-v", "--verbose",
         default=False, action="store_true",
         help="verbose logging (default: %(default)s)")
-    parser.add_argument ('-f', '--function', action='append',
-        default=[], nargs='+',
+    parser.add_argument ('-f', '--function', action='append', nargs='+',
+        default=defaults['function'] if 'function' in defaults else [],
         help='reduce function(s) (default: %(default)s)')
-    parser.add_argument ('-p', '--parameter', action='append',
-        default=[], nargs='+',
+    parser.add_argument ('-p', '--parameter', action='append', nargs='+',
+        default=defaults['parameter'] if 'parameter' in defaults else [],
         help='function parameter(s) (default: %(default)s)')
-    parser.add_argument ('-n', '--stack-size', action='append',
-        default=[], nargs='+', type=int,
-        help='stack of previously seen values (default: %(default)s)')
-    parser.add_argument ('-d', '--default', action='append',
-        default=[], nargs='+',
+    parser.add_argument ('-n', '--stack-size', action='append', nargs='+',
+        default=defaults['stack-size'] if 'stack-size' in defaults else [],
+        help='stack of previously seen values (default: %(default)s)',
+        type=int)
+    parser.add_argument ('-d', '--default', action='append', nargs='+',
+        default=defaults['default'] if 'default' in defaults else [],
         help='default key *or* value (default: %(default)s)')
-    parser.add_argument ('-r', '--result', action='append',
-        default=[], nargs='+',
+    parser.add_argument ('-r', '--result', action='append', nargs='+',
+        default=defaults['result'] if 'result' in defaults else [],
         help='result keys (default: %(default)s)')
 
-    return parser.parse_args ()
+    return process (parser.parse_args ())
+
+def process (args: argparse.Namespace) -> argparse.Namespace:
+
+    args.function = list (reduce (lambda a, b: a + b, args.function, []))
+    args.parameter = list (reduce (lambda a, b: a + b, args.parameter, []))
+    args.stack_size = list (reduce (lambda a, b: a + b, args.stack_size, []))
+    args.default = list (reduce (lambda a, b: a + b, args.default, []))
+    args.result = list (reduce (lambda a, b: a + b, args.result, []))
+
+    diff = len (args.result) - len (args.function)
+    args.function += [args.function[-1] for _ in range (diff)]
+    diff = len (args.result) - len (args.parameter)
+    args.parameter += [args.parameter[-1] for _ in range (diff)]
+    diff = len (args.result) - len (args.stack_size)
+    args.stack_size += [args.stack_size[-1] for _ in range (diff)]
+    diff = len (args.result) - len (args.default)
+    args.default += [None for _ in range (diff)]
+
+    return args
 
 ###############################################################################
 ###############################################################################
@@ -92,8 +112,9 @@ def loop (functions: list, parameters: list, stack_sizes: list, defaults: list,
 
             if stack.full:
                 args = stack.all + [last[result] if last else tick[default]
-                    if default in tick else default]
-                tick[result] = eval (function.format (*args))
+                if default in tick else default]
+                tick[result] = function (*args) if callable (function) \
+                    else eval (function.format (*args))
             else:
                 tick[result] = tick[default] if default in tick else default
 
@@ -101,7 +122,7 @@ def loop (functions: list, parameters: list, stack_sizes: list, defaults: list,
             now = datetime.fromtimestamp (tick['timestamp'])
             print ('[%s] %s' % (now, tick), file=sys.stderr)
 
-        print (tick, file=sys.stdout)
+        print (tick, file=sys.stdout); sys.stdout.flush ()
 
 ###############################################################################
 ###############################################################################
@@ -109,20 +130,6 @@ def loop (functions: list, parameters: list, stack_sizes: list, defaults: list,
 if __name__ == "__main__":
 
     args = get_arguments ()
-    args.function = list (reduce (lambda a, b: a + b, args.function, []))
-    args.parameter = list (reduce (lambda a, b: a + b, args.parameter, []))
-    args.stack_size = list (reduce (lambda a, b: a + b, args.stack_size, []))
-    args.default = list (reduce (lambda a, b: a + b, args.default, []))
-    args.result = list (reduce (lambda a, b: a + b, args.result, []))
-
-    diff = len (args.result) - len (args.function)
-    args.function += [args.function[-1] for _ in range (diff)]
-    diff = len (args.result) - len (args.parameter)
-    args.parameter += [args.parameter[-1] for _ in range (diff)]
-    diff = len (args.result) - len (args.stack_size)
-    args.stack_size += [args.stack_size[-1] for _ in range (diff)]
-    diff = len (args.result) - len (args.default)
-    args.default += [None for _ in range (diff)]
 
     try: loop (args.function, args.parameter, args.stack_size, args.default,
         args.result, verbose=args.verbose)
