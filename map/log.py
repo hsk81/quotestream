@@ -17,7 +17,7 @@ import numpy
 if __name__ == "__main__":
 
     args = do.get_arguments ({'function': [
-        [lambda *rest: numpy.log (rest).flatten ().tolist ()]
+        [lambda *rest: list (numpy.log (rest).flatten ())]
     ]})
 
     try: do.loop (args.function, args.parameter_group, args.result,

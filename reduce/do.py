@@ -111,9 +111,9 @@ def loop (functions: list, parameters: list, stack_sizes: list, defaults: list,
 
             if stack.full:
                 args = stack.all + [last[result] if last else tick[default]
-                if default in tick else default]
-                tick[result] = function (*args) if callable (function) \
-                    else eval (function.format (*args))
+                    if default in tick else default]
+                tick[result] = function (*args) if callable (function) else \
+                    eval (function.format (*args))
             else:
                 tick[result] = tick[default] if default in tick else default
 
