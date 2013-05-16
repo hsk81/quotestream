@@ -8,22 +8,24 @@ __author__ = 'hsk81'
 ###############################################################################
 ###############################################################################
 
-from reduce import get_arguments, loop
+import do
+import numpy
 
 ###############################################################################
 ###############################################################################
 
 if __name__ == "__main__":
 
-    args = get_arguments ({'stack-size': [[1]], 'function': [
-        [lambda curr, prev: float (curr) * 0.618 + float (prev) * 0.382]
+    args = do.get_arguments ({'stack-size': [[2]], 'function': [
+        [lambda curr, prev, last: list (numpy.array (
+            numpy.array (curr) * 1.000 - numpy.array (prev) * 1.000))]
     ]})
 
     if not all (args.default):
         for index, (d, p) in enumerate (zip (args.default, args.parameter)):
-            args.default[index] = p if d is None else d
+            args.default[index] = 0.0 if d is None else d ## default is 0.0
 
-    try: loop (args.function, args.parameter, args.stack_size, args.default,
+    try: do.loop (args.function, args.parameter, args.stack_size, args.default,
         args.result, verbose=args.verbose)
 
     except KeyboardInterrupt:
