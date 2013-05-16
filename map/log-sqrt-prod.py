@@ -8,7 +8,7 @@ __author__ = 'hsk81'
 ###############################################################################
 ###############################################################################
 
-from map import get_arguments, loop
+import do
 import numpy
 
 ###############################################################################
@@ -16,11 +16,11 @@ import numpy
 
 if __name__ == "__main__":
 
-    args = get_arguments ({'function': [
-        [lambda *values: numpy.log (numpy.array (list (map (float, values))))]
+    args = do.get_arguments ({'function': [
+        [lambda *rest: [numpy.log (numpy.sqrt (numpy.prod (rest)))]]
     ]})
 
-    try: loop (args.function, args.parameter_group, args.result,
+    try: do.loop (args.function, args.parameter_group, args.result,
         verbose=args.verbose)
 
     except KeyboardInterrupt:
