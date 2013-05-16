@@ -13,11 +13,22 @@ import do
 ###############################################################################
 ###############################################################################
 
+class FloatCallable (object):
+
+    def __call__ (self, *args: list) -> map:
+        return map (float, args)
+
+    def __repr__ (self) -> str:
+        return 'map (float, {0})'
+
+###############################################################################
+###############################################################################
+
 if __name__ == "__main__":
 
-    args = do.get_arguments ({'function': [
-        [lambda *rest: list (map (float, rest))]
-    ]})
+    args = do.get_arguments ({
+        'function': [[FloatCallable ()]]
+    })
 
     try: do.loop (args.function, args.parameter_group, args.result,
         verbose=args.verbose)

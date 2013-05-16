@@ -19,7 +19,13 @@ from numpy import *
 ###############################################################################
 ###############################################################################
 
-def get_arguments (defaults: dict=frozenset ({})) -> argparse.Namespace:
+def get_args (defaults: dict=frozenset ({}),
+              parser: argparse.ArgumentParser=None) -> argparse.Namespace:
+
+    return parser.parse_args () \
+        if parser else get_args_parser (defaults=defaults).parse_args ()
+
+def get_args_parser (defaults: dict=frozenset ({})) -> argparse.ArgumentParser:
 
     parser = argparse.ArgumentParser (description=
         "Reduces a stack of previously seen parameter values using a function "
@@ -47,9 +53,9 @@ def get_arguments (defaults: dict=frozenset ({})) -> argparse.Namespace:
         default=defaults['result'] if 'result' in defaults else [],
         help='result keys (default: %(default)s)')
 
-    return process (parser.parse_args ())
+    return parser
 
-def process (args: argparse.Namespace) -> argparse.Namespace:
+def normalize (args: argparse.Namespace) -> argparse.Namespace:
 
     args.function = list (reduce (lambda a, b: a + b, args.function, []))
     args.parameter = list (reduce (lambda a, b: a + b, args.parameter, []))
@@ -110,12 +116,12 @@ def loop (functions: list, parameters: list, stack_sizes: list, defaults: list,
             stack.put (tick[parameter])
 
             if stack.full:
-                args = stack.all + [last[result] if last else tick[default]
-                    if default in tick else default]
-                tick[result] = function (*args) if callable (function) else \
-                    eval (function.format (*args))
+                args = stack.all + [last[result]
+                    if last else tick[default] if default in tick else default]
+                tick[result] = list (function (*args)
+                    if callable (function) else eval (function.format (*args)))
             else:
-                tick[result] = tick[default] if default in tick else default
+                tick[result] = [tick[default] if default in tick else default]
 
         if verbose:
             now = datetime.fromtimestamp (tick['timestamp'])
@@ -128,7 +134,8 @@ def loop (functions: list, parameters: list, stack_sizes: list, defaults: list,
 
 if __name__ == "__main__":
 
-    args = get_arguments ()
+    args = get_args ()
+    args = normalize (args)
 
     try: loop (args.function, args.parameter, args.stack_size, args.default,
         args.result, verbose=args.verbose)

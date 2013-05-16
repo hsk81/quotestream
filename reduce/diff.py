@@ -14,16 +14,30 @@ import numpy
 ###############################################################################
 ###############################################################################
 
+class DiffCallable (object):
+
+    def __call__ (self, curr: list, prev: list, *args: list) -> numpy.array:
+        return numpy.array (numpy.array (curr) - numpy.array (prev))
+
+    def __repr__ (self): return '{0} - {1}'
+
+###############################################################################
+###############################################################################
+
 if __name__ == "__main__":
 
-    args = do.get_arguments ({'stack-size': [[2]], 'function': [
-        [lambda curr, prev, last: list (numpy.array (
-            numpy.array (curr) * 1.000 - numpy.array (prev) * 1.000))]
-    ]})
+    parser = do.get_args_parser ({
+        'stack-size': [[2]], 'function': [[DiffCallable ()]], 'default': [[0.0]]
+    })
 
-    if not all (args.default):
-        for index, (d, p) in enumerate (zip (args.default, args.parameter)):
-            args.default[index] = 0.0 if d is None else d ## default is 0.0
+    parser.description = \
+        """
+        Calculates the difference between consecutive values of a times series
+        by applying `current-value - previous-value`.
+        """
+
+    args = do.get_args (parser=parser)
+    args = do.normalize (args)
 
     try: do.loop (args.function, args.parameter, args.stack_size, args.default,
         args.result, verbose=args.verbose)

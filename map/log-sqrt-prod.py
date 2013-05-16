@@ -14,11 +14,22 @@ import numpy
 ###############################################################################
 ###############################################################################
 
+class LogSqrtProdCallable (object):
+
+    def __call__ (self, *args: list) -> numpy.array:
+        return [numpy.log (numpy.sqrt (numpy.prod (args)))]
+
+    def __repr__ (self) -> str:
+        return '[log (sqrt (prod ({0})))]'
+
+###############################################################################
+###############################################################################
+
 if __name__ == "__main__":
 
-    args = do.get_arguments ({'function': [
-        [lambda *rest: [numpy.log (numpy.sqrt (numpy.prod (rest)))]]
-    ]})
+    args = do.get_arguments ({
+        'function': [[LogSqrtProdCallable ()]]
+    })
 
     try: do.loop (args.function, args.parameter_group, args.result,
         verbose=args.verbose)

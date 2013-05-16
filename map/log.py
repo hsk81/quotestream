@@ -14,11 +14,22 @@ import numpy
 ###############################################################################
 ###############################################################################
 
+class LogCallable (object):
+
+    def __call__ (self, *args: list) -> numpy.array:
+        return numpy.log (args).flatten ()
+
+    def __repr__ (self) -> str:
+        return 'log ({0})'
+
+###############################################################################
+###############################################################################
+
 if __name__ == "__main__":
 
-    args = do.get_arguments ({'function': [
-        [lambda *rest: list (numpy.log (rest).flatten ())]
-    ]})
+    args = do.get_arguments ({
+        'function': [[LogCallable ()]]
+    })
 
     try: do.loop (args.function, args.parameter_group, args.result,
         verbose=args.verbose)
