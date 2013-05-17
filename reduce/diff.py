@@ -25,16 +25,11 @@ class DiffCallable (object):
 ###############################################################################
 
 if __name__ == "__main__":
+    diff = DiffCallable ()
 
     parser = do.get_args_parser ({
-        'stack-size': [[2]], 'function': [[DiffCallable ()]], 'default': [[0.0]]
+        'stack-size': [[2]], 'function': [[diff]], 'default': [[0.0]]
     })
-
-    parser.description = \
-        """
-        Calculates the difference between consecutive values of a times series
-        by applying `current-value - previous-value`.
-        """
 
     args = do.get_args (parser=parser)
     args = do.normalize (args)

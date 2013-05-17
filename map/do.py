@@ -21,14 +21,7 @@ from numpy import *
 
 def get_arguments (defaults: dict=frozenset ({})) -> argparse.Namespace:
 
-    parser = argparse.ArgumentParser (description=
-        "Maps functions to a set of parameter values and stores the results "
-        "in the corresponding keys. If there are less functions than result "
-        "keys than the last one will be repeated for the remaining results. "
-        "The parameters for each function need to be provided as a group. "
-        "Empty groups can either be left out or they can be indicated by an "
-        "empty string (used for functions without parameters). Interpolation "
-        "of parameters is based on the string's `format` method.")
+    parser = argparse.ArgumentParser ()
 
     parser.add_argument ('-v', '--verbose',
         default=False, action='store_true',

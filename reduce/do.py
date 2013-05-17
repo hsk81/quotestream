@@ -27,12 +27,7 @@ def get_args (defaults: dict=frozenset ({}),
 
 def get_args_parser (defaults: dict=frozenset ({})) -> argparse.ArgumentParser:
 
-    parser = argparse.ArgumentParser (description=
-        "Reduces a stack of previously seen parameter values using a function "
-        "to a result. It is possible to access within the evaluator the value "
-        "of the *most recent* result by referencing another interpolation "
-        "index: The latter option is convenient to calculate e.g. moving "
-        "averages.")
+    parser = argparse.ArgumentParser ()
 
     parser.add_argument ("-v", "--verbose",
         default=False, action="store_true",

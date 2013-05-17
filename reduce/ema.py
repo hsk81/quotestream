@@ -48,20 +48,6 @@ if __name__ == "__main__":
     parser.add_argument ("-w", "--ema-decay", default=ema.decay, type=float,
         help="Decay in [0.0/infinite, 1.0/no memory] (default: %(default)s)")
 
-    parser.description = \
-        """
-        Calculates the exponential moving average (EMA) of a time series; the
-        actual function applied by default is `current-value * 0.618 +
-        last-value * 0.382`, where the EMA decay can be set to another value
-        than the golden ratio of `0.618`.
-
-        The time series of interest can be selected by using the `parameter`
-        option and the name of the calculated series can be set using the
-        `result` option. The `default` option is set internally to whatever
-        `parameter` has been set to, to minimize build-up time for correct EMA
-        values, but it can also be set to e.g. `0.0`.
-        """
-
     args = do.get_args (parser=parser)
     args = do.normalize (args)
     ema.set_decay (args.ema_decay)
