@@ -30,7 +30,7 @@ if __name__ == "__main__":
     parser = do.get_args_parser ({
         'default': [[0.0]],
         'function': [[ReturnCallable ()]],
-        'stack-size': [[2]],
+        'stack-size': [[600]], ## == 10 min., for 1 sec. interpolation
     })
 
     args = do.get_args (parser=parser)
