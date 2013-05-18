@@ -23,8 +23,8 @@ class EmaCallable (object):
         return numpy.array (args[+0]) * self._decay_curr + \
                numpy.array (args[-1]) * self._decay_last
 
-    def __repr__ (self) -> str: return '{0}*%0.3f + {n}*%0.3f' % (
-        self._decay_curr, self._decay_last)
+    def __repr__ (self) -> str:
+        return '{0}*%0.3f + {n}*%0.3f' % (self._decay_curr, self._decay_last)
 
     def get_decay (self) -> float:
         return self._decay_curr
