@@ -23,16 +23,25 @@ def get_arguments (defaults: dict=frozenset ({})) -> argparse.Namespace:
 
     parser = argparse.ArgumentParser ()
 
+    class attach (argparse.Action):
+        """Appends values by *overwriting* initial defaults (if any)"""
+        def __call__(self, parser, namespace, values, option_string=None):
+            items = getattr (namespace, self.dest, [])
+            if items == self.default:
+                setattr (namespace, self.dest, [values])
+            else:
+                setattr (namespace, self.dest, list (items) + [values])
+
     parser.add_argument ('-v', '--verbose',
         default=False, action='store_true',
         help='verbose logging (default: %(default)s)')
-    parser.add_argument ('-f', '--function', action='append', nargs='+',
+    parser.add_argument ('-f', '--function', action=attach, nargs='+',
         default=defaults['function'] if 'function' in defaults else [],
         help='map function(s) (default: %(default)s)')
-    parser.add_argument ('-p', '--parameter-group', action='append', nargs='+',
+    parser.add_argument ('-p', '--parameter-group', action=attach, nargs='+',
         default=defaults['parameter-group'] if 'parameter-group' in defaults else [],
         help='parameter group *per* result key (default: %(default)s)')
-    parser.add_argument ('-r', '--result', action='append', nargs='+',
+    parser.add_argument ('-r', '--result', action=attach, nargs='+',
         default=defaults['result'] if 'result' in defaults else [],
         help='result keys (default: %(default)s)')
 

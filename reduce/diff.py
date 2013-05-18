@@ -16,8 +16,8 @@ import numpy
 
 class DiffCallable (object):
 
-    def __call__ (self, curr: list, prev: list, *args: list) -> numpy.array:
-        return numpy.array (numpy.array (curr) - numpy.array (prev))
+    def __call__ (self, *args: list) -> numpy.array:
+        return numpy.array (numpy.array (args[0]) - numpy.array (args[-2]))
 
     def __repr__ (self): return '{0} - {1}'
 

@@ -29,22 +29,31 @@ def get_args_parser (defaults: dict=frozenset ({})) -> argparse.ArgumentParser:
 
     parser = argparse.ArgumentParser ()
 
+    class attach (argparse.Action):
+        """Appends values by *overwriting* initial defaults (if any)"""
+        def __call__(self, parser, namespace, values, option_string=None):
+            items = getattr (namespace, self.dest, [])
+            if items == self.default:
+                setattr (namespace, self.dest, [values])
+            else:
+                setattr (namespace, self.dest, list (items) + [values])
+
     parser.add_argument ("-v", "--verbose",
         default=False, action="store_true",
         help="verbose logging (default: %(default)s)")
-    parser.add_argument ('-f', '--function', action='append', nargs='+',
+    parser.add_argument ('-f', '--function', action=attach, nargs='+',
         default=defaults['function'] if 'function' in defaults else [],
         help='reduce function(s) (default: %(default)s)')
-    parser.add_argument ('-p', '--parameter', action='append', nargs='+',
+    parser.add_argument ('-p', '--parameter', action=attach, nargs='+',
         default=defaults['parameter'] if 'parameter' in defaults else [],
         help='function parameter(s) (default: %(default)s)')
-    parser.add_argument ('-n', '--stack-size', action='append', nargs='+', type=int,
+    parser.add_argument ('-n', '--stack-size', action=attach, nargs='+', type=int,
         default=defaults['stack-size'] if 'stack-size' in defaults else [],
         help='stack of previously seen values (default: %(default)s)')
-    parser.add_argument ('-d', '--default', action='append', nargs='+',
+    parser.add_argument ('-d', '--default', action=attach, nargs='+',
         default=defaults['default'] if 'default' in defaults else [],
-        help='default key *or* value (default: %(default)s)')
-    parser.add_argument ('-r', '--result', action='append', nargs='+',
+        help='fallback (default: %(default)s)')
+    parser.add_argument ('-r', '--result', action=attach, nargs='+',
         default=defaults['result'] if 'result' in defaults else [],
         help='result keys (default: %(default)s)')
 
@@ -112,11 +121,11 @@ def loop (functions: list, parameters: list, stack_sizes: list, defaults: list,
 
             if stack.full:
                 args = stack.all + [last[result]
-                    if last else tick[default] if default in tick else default]
+                    if last else tick[default] if default in tick else float (default)]
                 tick[result] = list (function (*args)
                     if callable (function) else eval (function.format (*args)))
             else:
-                tick[result] = [tick[default] if default in tick else default]
+                tick[result] = [tick[default] if default in tick else float (default)]
 
         if verbose:
             now = datetime.fromtimestamp (tick['timestamp'])
