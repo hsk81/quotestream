@@ -19,12 +19,11 @@ class EmaCallable (object):
     def __init__ (self, decay: float) -> None:
         self._decay_curr, self._decay_last = decay, 1.0 - decay
 
-    def __call__ (self, curr: list, last: list, *args: list) -> numpy.array:
-        curr = numpy.array (curr) * self._decay_curr
-        last = numpy.array (last) * self._decay_last
-        return numpy.array (curr + last)
+    def __call__ (self, *args: list) -> numpy.array:
+        return numpy.array (args[+0]) * self._decay_curr + \
+               numpy.array (args[-1]) * self._decay_last
 
-    def __repr__ (self) -> str: return '{0}*%0.3f + {1}*%0.3f' % (
+    def __repr__ (self) -> str: return '{0}*%0.3f + {n}*%0.3f' % (
         self._decay_curr, self._decay_last)
 
     def get_decay (self) -> float:
@@ -52,7 +51,7 @@ if __name__ == "__main__":
     args = do.normalize (args)
     ema.set_decay (args.ema_decay)
 
-    if not all (args.default):  ## use provided parameter value as default
+    if not all (args.default): ## use provided parameter value as default
         for index, (d, p) in enumerate (zip (args.default, args.parameter)):
             args.default[index] = p if d is None else d
 

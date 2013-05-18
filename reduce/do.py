@@ -120,12 +120,16 @@ def loop (functions: list, parameters: list, stack_sizes: list, defaults: list,
             stack.put (tick[parameter])
 
             if stack.full:
-                args = stack.all + [last[result]
-                    if last else tick[default] if default in tick else float (default)]
-                tick[result] = list (function (*args)
-                    if callable (function) else eval (function.format (*args)))
+                args = stack.all + [last[result] if last
+                    else tick[default] if default in tick
+                    else eval (default) if type (default) is str
+                    else [default]]
+                tick[result] = list (function (*args) if callable (function)
+                    else eval (function.format (*args)))
             else:
-                tick[result] = [tick[default] if default in tick else float (default)]
+                tick[result] = tick[default] if default in tick \
+                    else eval (default) if type (default) is str \
+                    else [default]
 
         if verbose:
             now = datetime.fromtimestamp (tick['timestamp'])
