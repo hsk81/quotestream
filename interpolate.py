@@ -31,10 +31,6 @@ def get_arguments () -> argparse.Namespace:
     parser.add_argument ("-i", "--interval",
         default=1.000, type=float,
         help="homogeneity interval (default: %(default)s [s])")
-    parser.add_argument ("-a", "--ema-decay",
-        default=0.618, type=float,
-        help="EMA decay between 0.0 'infinite memory' and 1.0 'no memory' "
-             "(default: %(default)s)")
 
     return parser.parse_args ()
 
@@ -65,9 +61,8 @@ stack = ConcurrentStack (size=1)
 ###############################################################################
 ###############################################################################
 
-def sub_side (ema_decay: float, verbose: bool=False) -> None:
+def sub_side (verbose: bool=False) -> None:
 
-    curr_siac = 1.0
     curr_tick = None
     curr_tick_time = timedelta (0)
     curr_real_time = datetime.min
@@ -87,19 +82,17 @@ def sub_side (ema_decay: float, verbose: bool=False) -> None:
             n = (curr_real_time - last_real_time).total_seconds ()
             ## denominator: difference *timestamped* between ticks
             d = (curr_tick_time - last_tick_time).total_seconds ()
+            ## simulation acceleration factor: less is faster
+            curr_siac = n / d; stack.put ((curr_tick, n / d))
 
-            last_siac = curr_siac ## simulation acceleration
-            curr_siac = ema_decay * n / d + (1.0 - ema_decay) * last_siac
+            if verbose: print ('<%s> %s => %.6f' %
+                (curr_tick_time, curr_tick, curr_siac), file=sys.stderr)
 
-        if verbose: print ('<%s> %s => %.3f' %
-            (curr_tick_time, curr_tick, curr_siac), file=sys.stderr)
-
-        stack.put ((curr_tick, curr_siac))
     stack.put ((curr_tick, 0.0))
 
 def pub_side (interval: float, verbose: bool=False) -> None:
 
-    curr_tick, curr_siac = None, 1.0
+    curr_tick, curr_siac = None, sys.float_info.epsilon
     t0 = time.time ()
 
     while curr_siac > 0.0:
@@ -113,7 +106,7 @@ def pub_side (interval: float, verbose: bool=False) -> None:
             print (curr_tick, file=sys.stdout); sys.stdout.flush ()
 
         dt = interval * curr_siac - (time.time () - t0)
-        if dt > 0.000: time.sleep (dt)
+        if dt > 0.0: time.sleep (dt)
         t0 = time.time ()
 
 ###############################################################################
@@ -123,7 +116,7 @@ if __name__ == "__main__":
 
     args = get_arguments ()
 
-    sub_thread = Thread (target=sub_side, args=[args.ema_decay, args.verbose])
+    sub_thread = Thread (target=sub_side, args=[args.verbose])
     sub_thread.daemon = True
     pub_thread = Thread (target=pub_side, args=[args.interval, args.verbose])
     pub_thread.daemon = True
