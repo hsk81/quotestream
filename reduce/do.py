@@ -43,7 +43,7 @@ def get_args_parser (defaults: dict=frozenset ({})) -> argparse.ArgumentParser:
         help="verbose logging (default: %(default)s)")
     parser.add_argument ('-f', '--function', action=attach, nargs='+',
         default=defaults['function'] if 'function' in defaults else [],
-        help='reduce function(s) (default: %(default)s)')
+        help='reduction function(s) (default: %(default)s)')
     parser.add_argument ('-p', '--parameter', action=attach, nargs='+',
         default=defaults['parameter'] if 'parameter' in defaults else [],
         help='function parameter(s) (default: %(default)s)')
@@ -52,7 +52,7 @@ def get_args_parser (defaults: dict=frozenset ({})) -> argparse.ArgumentParser:
         help='stack of previously seen values (default: %(default)s)')
     parser.add_argument ('-d', '--default', action=attach, nargs='+',
         default=defaults['default'] if 'default' in defaults else [],
-        help='fallback (default: %(default)s)')
+        help='reduction base (default: %(default)s)')
     parser.add_argument ('-r', '--result', action=attach, nargs='+',
         default=defaults['result'] if 'result' in defaults else [],
         help='result keys (default: %(default)s)')
