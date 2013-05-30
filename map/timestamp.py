@@ -9,7 +9,7 @@ __author__ = 'hsk81'
 ###############################################################################
 
 import do
-from datetime import *
+import datetime as dt
 
 ###############################################################################
 ###############################################################################
@@ -17,10 +17,10 @@ from datetime import *
 class FromTimestampCallable (object):
 
     def __call__ (self, *args: list) -> map:
-        return map (str, map (datetime.fromtimestamp, args))
+        return map (str, map (dt.datetime.fromtimestamp, args))
 
     def __repr__ (self) -> str:
-        return 'map (str, map (datetime.fromtimestamp, {0}))'
+        return 'map (str, map (dt.datetime.fromtimestamp ({0}))'
 
 ###############################################################################
 ###############################################################################
