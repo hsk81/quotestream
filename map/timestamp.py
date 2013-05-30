@@ -29,8 +29,7 @@ if __name__ == "__main__":
 
     args = do.get_arguments ({
         'function': [[FromTimestampCallable ()]],
-        'parameter-group': [['timestamp']],
-        'result': [['timestamp']]
+        'parameter-group': [['timestamp']]
     })
 
     try: do.loop (args.function, args.parameter_group, args.result,
