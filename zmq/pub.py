@@ -40,18 +40,18 @@ def loop (context: zmq.Context, address: str, verbose: bool=False) -> None:
     socket.bind (address)
     socket.LINGER = 0
 
-    for line in sys.stdin:
-        tick = JSON.decode (line.replace ("'", '"'))
+    try:
+        for line in sys.stdin:
+            tick = JSON.decode (line.replace ("'", '"'))
 
-        if verbose:
-            now = datetime.fromtimestamp (tick['timestamp'])
-            print ('[%s] %s' % (now, tick), file=sys.stderr)
+            if verbose:
+                now = datetime.fromtimestamp (tick['timestamp'])
+                print ('[%s] %s' % (now, tick), file=sys.stderr)
 
-        print (tick, file=sys.stdout); sys.stdout.flush ()
-        socket.send_string (line)
-
-    socket.send_string ('\0')
-    raise StopIteration ()
+            print (tick, file=sys.stdout); sys.stdout.flush ()
+            socket.send_string (line)
+    finally:
+        socket.send_string ('\0')
 
 ###############################################################################
 ###############################################################################
@@ -63,8 +63,6 @@ if __name__ == "__main__":
 
     try:
         loop (context, args.pub_address, verbose=args.verbose)
-    except StopIteration:
-        print ('\0', file=sys.stderr if args.verbose else sys.stdout)
     except KeyboardInterrupt:
         pass
 
