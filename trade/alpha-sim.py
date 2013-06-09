@@ -13,6 +13,7 @@ import argparse
 import sys
 
 from datetime import datetime
+from numpy import *
 
 ###############################################################################
 ###############################################################################
@@ -29,7 +30,7 @@ def get_arguments () -> argparse.Namespace:
         help="BTC balance (default: %(default)s [BTC])")
 
     parser.add_argument ("-usd", "--usd-balance",
-        default=120.00, type=float,
+        default=100.00, type=float,
         help="USD balance (default: %(default)s [USD])")
 
     parser.add_argument ("-f", "--fee",
@@ -44,26 +45,37 @@ def get_arguments () -> argparse.Namespace:
 
 def loop (btc, usd, fee, quota, verbose: bool=False) -> None:
 
+    btc = array ([btc])
+    usd = array ([usd])
+    fee = array ([fee])
+
+    ratio = array ([0.0])
+    ret = array ([0.0])
+
     for line in sys.stdin:
-        tick = JSON.loads (line.replace ('"', '"'))
+        tick = JSON.loads (line.replace ("'", '"'))
 
-        if tick['volatility'] > 1.0: ## trend (?)
+        ratio = array (0.382 * ratio + 0.618 * array (tick['ratio']))
+        ret = array (0.382 * ret + 0.618 * array (tick['return']))
 
-            if tick['return'] > 0.0: ## upward trend (?)
-                btc += quota * btc / tick['last'] * (1.0 - fee)
+        if ratio > 1.00: ## trend?
+
+            if ret > 0.0: ## positive
+                btc += quota * usd / tick['price'] * (1.0 - fee)
                 usd -= quota * usd
 
-            if tick['return'] < 0.0: ## downward trend (?)
+            if ret < 0.0: ## negative
+                usd += quota * btc * tick['price'] * (1.0 - fee)
                 btc -= quota * btc
-                usd += quota * btc * tick['last'] * (1.0 - fee)
+
+        tick['btc'], tick['usd'] = list (btc), list (usd)
+        tick['tot'] = list (btc * tick['price'] + usd)
 
         if verbose:
             now = datetime.fromtimestamp (tick['timestamp'])
-            print ('[%s] %s: (btc:%.3f, usd:%.3f)' % (now, tick, btc, usd),
-                file=sys.stderr)
+            print ('[%s] %s' % (now, tick), file=sys.stderr)
 
-        print ('%s: (btc:%s, usd:%s)' % (tick, btc, usd),
-            file=sys.stdout); sys.stdout.flush ()
+        print (tick, file=sys.stdout); sys.stdout.flush ()
 
 ###############################################################################
 ###############################################################################
@@ -71,7 +83,7 @@ def loop (btc, usd, fee, quota, verbose: bool=False) -> None:
 if __name__ == "__main__":
     args = get_arguments ()
 
-    try: loop (args.btc_balace, args.usd_balace, args.fee, args.quota,
+    try: loop (args.btc_balance, args.usd_balance, args.fee, args.quota,
         verbose=args.verbose)
 
     except KeyboardInterrupt:

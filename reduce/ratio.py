@@ -79,6 +79,11 @@ def loop (numerators: list, denominators: list, results: list,
             if i in last_numerator and i in last_denominator:
                 tick[result] = list (last_numerator[i] / last_denominator[i])
 
+                if isnan (tick[result]):
+                    tick[result] = list ([0.0])
+                if isposinf (tick[result]) or isneginf (tick[result]):
+                    tick[result] = list ([0.0])
+
                 if verbose:
                     now = datetime.fromtimestamp (tick['timestamp'])
                     print ('[%s] %s' % (now, tick), file=sys.stderr)
