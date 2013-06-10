@@ -4,8 +4,8 @@ cat log/ticks.log | ./filter.py -e high low -e bid ask -e volume | ./map/float.p
 
 ./zmq/sub.py | ./interpolate.py -i 1.000 | ./reduce/return.py -p last -r return -n 600 | ./reduce/volatility.py -p return -r volatility -n 600 | ./alias.py -m volatility rhs-volatility | ./zmq/pub.py -pub 'tcp://*:9999' -v > /dev/null
 
-./zmq/sub.py -sub 'tcp://127.0.0.1:7777' -sub 'tcp://127.0.0.1:9999' | ./reduce/volatility-ratio.py -n lhs-volatility -d rhs-volatility -r ratio | ./zmq/pub.py -pub 'tcp://*:8080' -v > /dev/null
+./zmq/sub.py -sub 'tcp://127.0.0.1:7777' -sub 'tcp://127.0.0.1:9999' | ./reduce/ratio.py -n lhs-volatility -d rhs-volatility -r ratio | ./zmq/pub.py -pub 'tcp://*:7799' -v > /dev/null
 
-./zmq/sub.py -sub 'tcp://127.0.0.1:8080' | grep "rhs-volatility" | ./alias.py -m rhs-volatility volatility -v > data/lrv-ratio.log
+./zmq/sub.py -sub 'tcp://127.0.0.1:7799' | grep "rhs-volatility" | ./alias.py -m rhs-volatility volatility -v > data/lrv-ratio.log
 
 cat data/lrv-ratio.log | ./map/exp.py -p last -r price | ./trade/alpha-sim.py -v > data/alpha-sim.log
