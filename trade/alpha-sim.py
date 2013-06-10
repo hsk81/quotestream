@@ -25,17 +25,13 @@ def get_arguments () -> argparse.Namespace:
         default=False, action='store_true',
         help='verbose logging (default: %(default)s)')
 
-    parser.add_argument ("-btc", "--btc-balance",
-        default=1.0000, type=float,
-        help="BTC balance (default: %(default)s [BTC])")
-
-    parser.add_argument ("-usd", "--usd-balance",
+    parser.add_argument ("-b", "--balance",
         default=100.00, type=float,
-        help="USD balance (default: %(default)s [USD])")
+        help="initial balance (default: %(default)s [USD])")
 
     parser.add_argument ("-f", "--fee",
         default=0.0050, type=float,
-        help="Commission fee (default: %(default)s)")
+        help="commission fee (default: %(default)s)")
 
     parser.add_argument ("-q", "--quota",
         default=0.0010, type=float,
@@ -43,14 +39,17 @@ def get_arguments () -> argparse.Namespace:
 
     return parser.parse_args ()
 
-def loop (btc, usd, fee, quota, verbose: bool=False) -> None:
+def loop (balance, fee, quota, verbose: bool=False) -> None:
 
-    btc = array ([btc])
-    usd = array ([usd])
+    line = sys.stdin.readline ()
+    tick = JSON.loads (line.replace ("'", '"'))
+
+    btc = 0.5 * balance / array (tick['price'])
+    usd = 0.5 * balance * array ([1.000000000])
     fee = array ([fee])
 
-    ratio = array ([0.0])
-    ret = array ([0.0])
+    ratio = array ([0.0]) ## ratio of two volatility series of return
+    ret = array ([0.0]) ## return of log-price
 
     for line in sys.stdin:
         tick = JSON.loads (line.replace ("'", '"'))
@@ -83,7 +82,7 @@ def loop (btc, usd, fee, quota, verbose: bool=False) -> None:
 if __name__ == "__main__":
     args = get_arguments ()
 
-    try: loop (args.btc_balance, args.usd_balance, args.fee, args.quota,
+    try: loop (args.balance, args.fee, args.quota,
         verbose=args.verbose)
 
     except KeyboardInterrupt:
