@@ -58,8 +58,8 @@ pylab.plot (price, 'b-')
 pylab.grid ()
 
 pylab.subplot (323)
-pylab.plot (tot, 'c.')
-pylab.plot (tot, 'black')
+pylab.plot (tot - tot[0], 'c.')
+pylab.plot (tot - tot[0], 'black')
 pylab.grid ()
 
 pylab.subplot (325)
