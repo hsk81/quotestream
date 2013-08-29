@@ -14,7 +14,7 @@ import numpy
 ###############################################################################
 ###############################################################################
 
-class ReturnCallable (object):
+class DiffCallable (object):
 
     def __call__ (self, *args: list) -> numpy.array:
         return numpy.array (args[0]) - numpy.array (args[-2])
@@ -29,7 +29,7 @@ if __name__ == "__main__":
 
     parser = do.get_args_parser ({
         'default': [[0.0]],
-        'function': [[ReturnCallable ()]],
+        'function': [[DiffCallable ()]],
         'stack-size': [[600]], ## == 10 min., for 1 sec. interpolation
     })
 

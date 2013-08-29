@@ -9,3 +9,5 @@ cat log/ticks.log | ./filter.py -e high low -e bid ask -e volume | ./map/float.p
 ./zmq/sub.py -sub 'tcp://127.0.0.1:7799' | grep "rhs-volatility" | ./alias.py -m rhs-volatility volatility -v > data/lrv-ratio.log
 
 cat data/lrv-ratio.log | ./map/exp.py -p last -r price | ./trade/alpha-sim.py -v > data/alpha-sim.log
+
+tail -n 1024 log/ticks.log | ./filter.py -i timestamp -i last | ./map/float.py -p last -r last | ./map/log.py -p last -r last | ./reduce/ema.py -p last -r ema -v | ./plot.py -p timestamp last -p last -p timestamp ema -p ema -n 2 > /dev/null

@@ -1,5 +1,3 @@
-#!/usr/bin/env python2
-
 ###############################################################################
 ###############################################################################
 
@@ -15,6 +13,17 @@ import sys
 
 from datetime import datetime
 from functools import reduce
+
+###############################################################################
+###############################################################################
+
+def get_defaults ():
+
+    return dict (
+        colors=[['b', 'r', 'g', 'm', 'c', 'y']],
+        markers=[['.']],
+        widths=[[0]]
+    )
 
 ###############################################################################
 ###############################################################################
@@ -79,8 +88,8 @@ def process (args):
 ###############################################################################
 ###############################################################################
 
-def loop (parameter_groups, colors, widths, markers, ncols, hold=False,
-          verbose=False):
+def loop (parameter_groups, colors, widths, markers, ncols, plotter,
+          hold=False, verbose=False):
 
     values_matrix = []
     for parameter_group in parameter_groups:
@@ -91,14 +100,14 @@ def loop (parameter_groups, colors, widths, markers, ncols, hold=False,
 
         for pg_index, parameter_group in enumerate (parameter_groups):
 
-            def fn (value):
+            def vn (value):
                 if isinstance (value, list):
                     return value[0] if len (value) > 0 else None
                 else:
                     return value
 
             for p_index, parameter in enumerate (parameter_group):
-                values_matrix[pg_index][p_index].append (fn (tick[parameter]))
+                values_matrix[pg_index][p_index].append (vn (tick[parameter]))
 
         if verbose:
             now = datetime.fromtimestamp (tick['timestamp'])
@@ -113,27 +122,11 @@ def loop (parameter_groups, colors, widths, markers, ncols, hold=False,
 
         index, (values_group, color, width, marker) = item
         pylab.subplot (nrows, ncols, 1 if hold else (index + 1))
-        pylab.plot (*values_group, color=color, linewidth=width, marker=marker)
+        plotter (*values_group, color=color, linewidth=width, marker=marker)
         if not hold: pylab.grid ()
 
     if hold: pylab.grid ()
     pylab.show ()
-
-###############################################################################
-###############################################################################
-
-if __name__ == "__main__":
-
-    args = get_arguments (dict (
-        colors=[['b', 'r', 'g', 'm', 'c', 'y']],
-        markers=[['.']],
-        widths=[[0]]
-    ))
-
-    try: loop (args.parameter_group, args.colors, args.widths, args.markers,
-               args.ncols, hold=args.keep, verbose=args.verbose)
-
-    except KeyboardInterrupt: pass
 
 ###############################################################################
 ###############################################################################
