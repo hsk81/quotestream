@@ -19,9 +19,9 @@ class EmaCallable (object):
     def __init__ (self, decay: float) -> None:
         self._decay_curr, self._decay_last = decay, 1.0 - decay
 
-    def __call__ (self, *args: list) -> numpy.array:
-        return numpy.array (args[+0]) * self._decay_curr + \
-               numpy.array (args[-1]) * self._decay_last
+    def __call__ (self, timestamps, values: list, last: list) -> numpy.array:
+
+        return values[0] * self._decay_curr + last[0] * self._decay_last
 
     def __repr__ (self) -> str:
         return '{0}*%0.3f + {n}*%0.3f' % (self._decay_curr, self._decay_last)
@@ -41,19 +41,14 @@ if __name__ == "__main__":
     ema = EmaCallable (decay=0.618)
 
     parser = do.get_args_parser ({
-        'stack-size': [[1]], 'function': [[ema]]
+        'stack-size': 1, 'function': ema
     })
 
     parser.add_argument ("-w", "--ema-decay", default=ema.decay, type=float,
         help="Decay in [0.0/infinite, 1.0/no memory] (default: %(default)s)")
 
     args = do.get_args (parser=parser)
-    args = do.normalize (args)
-    ema.set_decay (args.ema_decay)
-
-    if not all (args.default): ## use provided parameter value as default
-        for index, (d, p) in enumerate (zip (args.default, args.parameter)):
-            args.default[index] = p if d is None else d
+    ema.decay = args.ema_decay
 
     try: do.loop (args.function, args.parameter, args.stack_size, args.default,
         args.result, verbose=args.verbose)

@@ -21,9 +21,9 @@ class VolatilityCallable (object):
         self.scale = scale
         self.exponent = p
 
-    def __call__ (self, *args: list) -> numpy.array:
+    def __call__ (self, timestamps, values: list, last: list) -> numpy.array:
 
-        returns = args[:-1]
+        returns = values
         size = len (returns)
         weights = [self.exponent] * size
 
@@ -33,7 +33,9 @@ class VolatilityCallable (object):
 
         return power * self.scale
 
-    def __repr__ (self): return 'volatility for dt=1s, n=600 and p=2.0'
+    def __repr__ (self):
+
+        return 'volatility for dt=1s, n=600 and p=2.0'
 
 ###############################################################################
 ###############################################################################
@@ -42,9 +44,9 @@ if __name__ == "__main__":
     volatility = VolatilityCallable (scale=1.0)
 
     parser = do.get_args_parser ({
-        'default': [[0.0]],
-        'function': [[volatility]],
-        'stack-size': [[600]], ## == 10 min., for 1 sec. interpolation
+        'default': [0.0],
+        'function': volatility,
+        'stack-size': 2
     })
 
     ##

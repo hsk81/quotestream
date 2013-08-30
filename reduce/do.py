@@ -13,7 +13,6 @@ import argparse
 import sys
 
 from datetime import datetime
-from functools import reduce
 from numpy import *
 
 ###############################################################################
@@ -26,55 +25,30 @@ def get_args (defaults: dict=frozenset ({}),
         if parser else get_args_parser (defaults=defaults).parse_args ()
 
 def get_args_parser (defaults: dict=frozenset ({})) -> argparse.ArgumentParser:
-
     parser = argparse.ArgumentParser ()
-
-    class attach (argparse.Action):
-        """Appends values by *overwriting* initial defaults (if any)"""
-        def __call__(self, parser, namespace, values, option_string=None):
-            items = getattr (namespace, self.dest, [])
-            if items == self.default:
-                setattr (namespace, self.dest, [values])
-            else:
-                setattr (namespace, self.dest, list (items) + [values])
 
     parser.add_argument ("-v", "--verbose",
         default=False, action="store_true",
         help="verbose logging (default: %(default)s)")
-    parser.add_argument ('-f', '--function', action=attach, nargs='+',
-        default=defaults['function'] if 'function' in defaults else [],
-        help='reduction function(s) (default: %(default)s)')
-    parser.add_argument ('-p', '--parameter', action=attach, nargs='+',
-        default=defaults['parameter'] if 'parameter' in defaults else [],
-        help='function parameter(s) (default: %(default)s)')
-    parser.add_argument ('-n', '--stack-size', action=attach, nargs='+', type=int,
-        default=defaults['stack-size'] if 'stack-size' in defaults else [],
-        help='stack of previously seen values (default: %(default)s)')
-    parser.add_argument ('-d', '--default', action=attach, nargs='+',
-        default=defaults['default'] if 'default' in defaults else [],
+    parser.add_argument ('-f', '--function',
+        default=defaults['function'] if 'function' in defaults else None,
+        help='reduction function (default: %(default)s)')
+    parser.add_argument ('-p', '--parameter',
+        default=defaults['parameter'] if 'parameter' in defaults else 'timestamp',
+        help='function parameter (default: %(default)s)')
+    parser.add_argument ('-n', '--stack-size', type=int,
+        default=defaults['stack-size'] if 'stack-size' in defaults else 1,
+        help='size of stack of recent values (default: %(default)s)')
+    parser.add_argument ('-d', '--default',
+        default=defaults['default'] if 'default' in defaults else [0.0],
         help='reduction base (default: %(default)s)')
-    parser.add_argument ('-r', '--result', action=attach, nargs='+',
-        default=defaults['result'] if 'result' in defaults else [],
-        help='result keys (default: %(default)s)')
+    parser.add_argument ('-r', '--result',
+        default=defaults['result'] if 'result' in defaults else 'result',
+        help='result key (default: %(default)s)')
 
     return parser
 
 def normalize (args: argparse.Namespace) -> argparse.Namespace:
-
-    args.function = list (reduce (lambda a, b: a + b, args.function, []))
-    args.parameter = list (reduce (lambda a, b: a + b, args.parameter, []))
-    args.stack_size = list (reduce (lambda a, b: a + b, args.stack_size, []))
-    args.default = list (reduce (lambda a, b: a + b, args.default, []))
-    args.result = list (reduce (lambda a, b: a + b, args.result, []))
-
-    diff = len (args.result) - len (args.function)
-    args.function += [args.function[-1] for _ in range (diff)]
-    diff = len (args.result) - len (args.parameter)
-    args.parameter += [args.parameter[-1] for _ in range (diff)]
-    diff = len (args.result) - len (args.stack_size)
-    args.stack_size += [args.stack_size[-1] for _ in range (diff)]
-    diff = len (args.result) - len (args.default)
-    args.default += [None for _ in range (diff)]
 
     return args
 
@@ -88,15 +62,15 @@ class Stack (object):
         self._list = []
         self._size = size
 
-    def put (self, item: object) -> None:
+    def put (self, item: float or list) -> None:
 
         self._list[self._size - 1:] = []
-        self._list.insert (0, item)
+        self._list.insert (0, item[0] if isinstance (item, list) else item)
 
     @property
     def all (self) -> list:
 
-        return self._list
+        return array (self._list)
 
     @property
     def full (self) -> bool:
@@ -106,30 +80,37 @@ class Stack (object):
 ###############################################################################
 ###############################################################################
 
-def loop (functions: list, parameters: list, stack_sizes: list, defaults: list,
-          results: list, verbose: bool=False) -> None:
+def loop (function, parameter, stack_size, default, result: list,
+          verbose: bool=False) -> None:
 
-    stacks = [Stack (size=size) for size in stack_sizes]
+    stack_t = Stack (size=stack_size)
+    stack_v = Stack (size=stack_size)
     tick = None
 
     for line in sys.stdin:
         last, tick = tick, JSON.decode (line.replace ("'", '"'))
 
-        for item in zip (stacks, functions, parameters, defaults, results):
-            stack, function, parameter, default, result = item
-            stack.put (tick[parameter])
+        stack_t.put (tick['timestamp'])
+        stack_v.put (tick[parameter])
 
-            if stack.full:
-                args = stack.all + [last[result] if last
-                    else tick[default] if default in tick
-                    else eval (default) if type (default) is str
-                    else [default]]
-                tick[result] = list (function (*args) if callable (function)
-                    else eval (function.format (*args)))
+        if stack_v.full:
+            if callable (function):
+                tick[result] = list (function (stack_t.all, stack_v.all,
+                    last[result] if last
+                        else list (eval (default) if type (default) is str
+                            else default)
+                ).flatten ())
             else:
-                tick[result] = tick[default] if default in tick \
-                    else eval (default) if type (default) is str \
-                    else [default]
+                tick[result] = list (eval (function.format (
+                    ts=stack_t.all,
+                    values=stack_v.all,
+                    last=last[result] if last
+                        else list (eval (default) if type (default) is str
+                            else default)
+                )).flatten ())
+        else:
+            tick[result] = list (eval (default) if type (default) is str
+                else default)
 
         if verbose:
             now = datetime.fromtimestamp (tick['timestamp'])
