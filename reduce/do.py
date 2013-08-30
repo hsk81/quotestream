@@ -48,10 +48,6 @@ def get_args_parser (defaults: dict=frozenset ({})) -> argparse.ArgumentParser:
 
     return parser
 
-def normalize (args: argparse.Namespace) -> argparse.Namespace:
-
-    return args
-
 ###############################################################################
 ###############################################################################
 

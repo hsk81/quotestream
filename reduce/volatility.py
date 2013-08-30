@@ -90,7 +90,6 @@ if __name__ == "__main__":
         help="scaled interval (default: %(default)s [s])")
 
     args = do.get_args (parser=parser)
-    args = do.normalize (args)
 
     volatility.exponent, volatility.scale = args.exponent, \
         numpy.sqrt (numpy.array (args.interval_scaled) / args.stack_size) \
