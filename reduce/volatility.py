@@ -21,7 +21,7 @@ class VolatilityCallable (object):
         self.scale = scale
         self.exponent = p
 
-    def __call__ (self, timestamps, values: list, last: list) -> numpy.array:
+    def __call__ (self, ts, values: list, last: list) -> numpy.array:
 
         returns = values
         size = len (returns)

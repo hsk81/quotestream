@@ -118,9 +118,7 @@ def loop (function, parameter, stack_size, default, result: list,
 ###############################################################################
 
 if __name__ == "__main__":
-
     args = get_args ()
-    args = normalize (args)
 
     try: loop (args.function, args.parameter, args.stack_size, args.default,
         args.result, verbose=args.verbose)

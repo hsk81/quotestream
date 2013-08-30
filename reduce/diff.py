@@ -19,7 +19,7 @@ class DiffCallable (object):
     def __init__ (self, n: int) -> None:
         self.n = n
 
-    def __call__ (self, timestamps, values: list, last: list) -> numpy.array:
+    def __call__ (self, ts, values: list, last: list) -> numpy.array:
         return values[0] - values[-1]
 
     def __repr__ (self):

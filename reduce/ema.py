@@ -16,39 +16,40 @@ import numpy
 
 class EmaCallable (object):
 
-    def __init__ (self, decay: float) -> None:
-        self._decay_curr, self._decay_last = decay, 1.0 - decay
+    def __init__ (self, tau: float) -> None:
+        self._tau = tau
 
-    def __call__ (self, timestamps, values: list, last: list) -> numpy.array:
-
-        return values[0] * self._decay_curr + last[0] * self._decay_last
+    def __call__ (self, ts, values: list, last: list) -> numpy.array:
+        mu = numpy.exp ((ts[1] - ts[0]) / self.tau)
+        return mu * last[0] + (1.0 - mu) * values[0]
 
     def __repr__ (self) -> str:
-        return '{0}*%0.3f + {n}*%0.3f' % (self._decay_curr, self._decay_last)
+        return 'μ·EMA (t@{n-1}) + (1-μ)·z@{n-1} | ' \
+               'μ := exp ((t@{n-1} - t@{n})/τ)'
 
-    def get_decay (self) -> float:
-        return self._decay_curr
+    def get_tau (self) -> float:
+        return self._tau
 
-    def set_decay (self, value: float) -> None:
-        self._decay_curr, self._decay_last = value, 1.0 - value
+    def set_tau (self, value: float) -> None:
+        self._tau = value
 
-    decay = property (fget=get_decay, fset=set_decay)
+    tau = property (fget=get_tau, fset=set_tau)
 
 ###############################################################################
 ###############################################################################
 
 if __name__ == "__main__":
-    ema = EmaCallable (decay=0.618)
+    ema = EmaCallable (tau=600) ## 10mins
 
     parser = do.get_args_parser ({
-        'stack-size': 1, 'function': ema
+        'stack-size': 2, 'function': ema
     })
 
-    parser.add_argument ("-w", "--ema-decay", default=ema.decay, type=float,
-        help="Decay in [0.0/infinite, 1.0/no memory] (default: %(default)s)")
+    parser.add_argument ("-t", "--tau", default=ema.tau, type=float,
+        help="Time interval (default: %(default)s [s])")
 
     args = do.get_args (parser=parser)
-    ema.decay = args.ema_decay
+    ema.tau = args.tau
 
     try: do.loop (args.function, args.parameter, args.stack_size, args.default,
         args.result, verbose=args.verbose)
