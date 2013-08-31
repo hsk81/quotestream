@@ -36,7 +36,7 @@ def get_args_parser (defaults: dict=frozenset ({})) -> argparse.ArgumentParser:
         help='reduction function (default: %(default)s)')
     parser.add_argument ('-p', '--parameters', action='append', nargs='+',
         default=defaults['parameters'] if 'parameters' in defaults else [],
-        help='function parameter(s) (default: %(default)s)')
+        help='function parameter key(s) (default: %(default)s)')
     parser.add_argument ('-n', '--stack-size', type=int,
         default=defaults['stack-size'] if 'stack-size' in defaults else 1,
         help='size of stack of recent values (default: %(default)s)')

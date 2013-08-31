@@ -30,7 +30,7 @@ class RatioCallable (object):
         return quotient
 
     def __repr__ (self):
-        return '{numerator} / {denominator}'
+        return '@{0}["numerator"] / @{0}["denominator"]'
 
 ###############################################################################
 ###############################################################################

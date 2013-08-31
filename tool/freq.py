@@ -12,9 +12,8 @@ import ujson as JSON
 import argparse
 import sys
 
-from datetime import datetime, timedelta
-from functools import reduce
-from numpy import log
+from datetime import datetime
+from datetime import timedelta
 
 ###############################################################################
 ###############################################################################
@@ -28,35 +27,17 @@ def get_args (defaults: dict=frozenset ({}),
 def get_args_parser (defaults: dict=frozenset ({})) -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser ()
 
-    class attach (argparse.Action):
-        """Appends values by *overwriting* initial defaults (if any)"""
-        def __call__(self, parser, namespace, values, option_string=None):
-            items = getattr (namespace, self.dest, [])
-            if items == self.default:
-                setattr (namespace, self.dest, [values])
-            else:
-                setattr (namespace, self.dest, list (items) + [values])
-
     parser.add_argument ("-v", "--verbose",
         default=False, action="store_true",
         help="verbose logging (default: %(default)s)")
-    parser.add_argument ('-i', '--interval', action=attach, nargs='+',
-        default=defaults['interval'] if 'interval' in defaults else [],
+    parser.add_argument ('-i', '--interval', type=float,
+        default=defaults['interval'] if 'interval' in defaults else 1.0,
         help='time interval (default: %(default)s [s])')
-    parser.add_argument ('-r', '--result', action=attach, nargs='+',
+    parser.add_argument ('-r', '--result',
         default=defaults['result'] if 'result' in defaults else [],
         help='result keys (default: %(default)s)')
 
     return parser
-
-def normalize (args: argparse.Namespace) -> argparse.Namespace:
-
-    args.interval = list (reduce (lambda a, b: a + b, args.interval, []))
-    args.result = list (reduce (lambda a, b: a + b, args.result, []))
-
-    diff = len (args.result) - len (args.interval)
-    args.interval += [args.interval[-1] for _ in range (diff)]
-    return args
 
 ###############################################################################
 ###############################################################################
@@ -64,42 +45,37 @@ def normalize (args: argparse.Namespace) -> argparse.Namespace:
 class Stack (object):
 
     def __init__ (self, interval: float=0.0) -> None:
-
         self._list, self._interval = [], timedelta (seconds=interval)
 
     def __len__ (self) -> int:
-
         return len (self._list)
 
-    def put (self, timestamp: datetime) -> None:
-
-        self._list.insert (0, timestamp)
-        while self._list[-1] < timestamp - self._interval:
+    def __setitem__ (self, key: int, value: datetime) -> None:
+        self._list.insert (key, value)
+        while self._list[-1] < value - self._interval:
             self._list.pop ()
+
+    def put (self, timestamp: datetime) -> None:
+        self[0] = timestamp
 
     @property
     def interval (self) -> float:
-
         return self._interval.total_seconds ()
 
 ###############################################################################
 ###############################################################################
 
-def loop (intervals: list, results: list, verbose: bool=False) -> None:
+def loop (interval: list, result: list, verbose: bool=False) -> None:
 
-    stacks = [Stack (interval=interval) for interval in map (lambda i: eval (i)
-        if type (i) is str else i, intervals)]
+    stack = Stack (interval=eval (interval) if type (interval) is str
+        else interval)
 
     for line in sys.stdin:
         tick = JSON.decode (line.replace ("'", '"'))
         now = datetime.fromtimestamp (tick['timestamp'])
+        stack.put (now); tick[result] = [len (stack) / stack.interval]
 
-        for stack, result in zip (stacks, results):
-            stack.put (now); tick[result] = [len (stack) / stack.interval]
-
-        if verbose:
-            print ('[%s] %s' % (now, tick), file=sys.stderr)
-
+        if verbose: print ('[%s] %s' % (now, tick), file=sys.stderr)
         print (tick, file=sys.stdout); sys.stdout.flush ()
 
 ###############################################################################
@@ -107,9 +83,9 @@ def loop (intervals: list, results: list, verbose: bool=False) -> None:
 
 if __name__ == "__main__":
 
-    args = normalize (get_args ({
-        'interval': [[600.0]] ## [s] == 10 minutes
-    }))
+    args = get_args ({
+        'result': 'freq', 'interval': 600.0 ## 10min
+    })
 
     try: loop (args.interval, args.result, verbose=args.verbose)
     except KeyboardInterrupt: pass
