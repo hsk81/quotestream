@@ -22,8 +22,8 @@ from numpy import *
 def get_args (defaults: dict=frozenset ({}),
               parser: argparse.ArgumentParser=None) -> argparse.Namespace:
 
-    return parser.parse_args () \
-        if parser else get_args_parser (defaults=defaults).parse_args ()
+    return normalize (parser.parse_args () if parser
+        else get_args_parser (defaults=defaults).parse_args ())
 
 def get_args_parser (defaults: dict=frozenset ({})) -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser ()
@@ -48,6 +48,10 @@ def get_args_parser (defaults: dict=frozenset ({})) -> argparse.ArgumentParser:
         help='result key (default: %(default)s)')
 
     return parser
+
+def normalize (args: argparse.Namespace) -> argparse.Namespace:
+    args.parameters = reduce (lambda a, b: a + b, args.parameters)
+    return args
 
 ###############################################################################
 ###############################################################################
@@ -89,7 +93,6 @@ class Stack (object):
 def loop (function, parameters, stack_size, default, result: list,
           verbose: bool=False) -> None:
 
-    parameters = reduce (lambda a, b: a + b, parameters)
     stacks = [Stack (size=stack_size) for _ in parameters]
     tick = None
 
