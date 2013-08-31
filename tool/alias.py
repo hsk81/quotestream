@@ -20,9 +20,11 @@ from datetime import datetime
 def get_arguments () -> argparse.Namespace:
 
     parser = argparse.ArgumentParser (description=
-        "Copies or moves a key with a new name; in both cases the value "
-        "remains unchanged. It is possible to bulk copy or rename keys by "
-        "repeating the corresponding option multiple times.")
+        """
+        Copies or moves a key with a new name; in both cases the value
+        remains unchanged. It is possible to bulk copy or rename keys by
+        repeating the corresponding option multiple times.
+        """)
 
     parser.add_argument ("-v", "--verbose",
         default=False, action="store_true",

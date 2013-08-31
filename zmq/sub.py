@@ -34,7 +34,7 @@ def get_arguments () -> argparse.Namespace:
     parser.add_argument ("-v", "--verbose",
         default=False, action="store_true",
         help="verbose logging (default: %(default)s)")
-    parser.add_argument ('-sub', '--sub-address',
+    parser.add_argument ('-a', '--sub-address',
         default=[['tcp://127.0.0.1:8888']], action=attach, nargs='+',
         help='subscription address (default: %(default)s)')
 

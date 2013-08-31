@@ -25,7 +25,7 @@ def get_arguments () -> argparse.Namespace:
     parser.add_argument ("-v", "--verbose",
         default=False, action="store_true",
         help="verbose logging (default: %(default)s)")
-    parser.add_argument ('-pub', '--pub-address',
+    parser.add_argument ('-a', '--pub-address',
         default='tcp://*:8888',
         help='publication address (default: %(default)s)')
 

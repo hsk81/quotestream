@@ -22,8 +22,10 @@ from threading import Thread, Lock
 def get_arguments () -> argparse.Namespace:
 
     parser = argparse.ArgumentParser (description=
-        "Transforms an inhomogeneous time series to a homogeneous one by "
-        "re-delivering the most recent tick in regular intervals.")
+        """
+        Transforms an inhomogeneous time series to a homogeneous one by
+        re-delivering the most recent tick in regular intervals.
+        """)
 
     parser.add_argument ("-v", "--verbose",
         default=False, action="store_true",

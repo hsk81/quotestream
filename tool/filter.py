@@ -20,9 +20,11 @@ from datetime import datetime
 def get_arguments () -> argparse.Namespace:
 
     parser = argparse.ArgumentParser (description=
-        "Includes or excludes keys: If no include is provided then *all* keys "
-        "are kept except the explicitly excluded. It is not possible to apply "
-        "the include *and* exclude operations simultaneously.")
+        """
+        Includes or excludes keys: If no include is provided then *all* keys
+        are kept except the explicitly excluded. It is not possible to apply
+        the include *and* exclude operations simultaneously.
+        """)
 
     parser.add_argument ("-v", "--verbose",
         default=False, action="store_true",

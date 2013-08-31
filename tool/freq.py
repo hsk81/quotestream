@@ -25,7 +25,21 @@ def get_args (defaults: dict=frozenset ({}),
         if parser else get_args_parser (defaults=defaults).parse_args ()
 
 def get_args_parser (defaults: dict=frozenset ({})) -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser ()
+
+    parser = argparse.ArgumentParser (description=
+        """
+        The *tick frequency* at time t@{i} is defined as f (t@{i}) =
+        f (Δt; t@{i}) = 1/Δt·|{t@{j} where t@{j}-Δt < t@{j} < t@{i}}|, where Δt
+        is the size of the time interval in which the ticks are counted.
+        """, epilog=
+        """
+        Some researchers found the "log tick frequency," log f (t@{i}), to be
+        more relevant. It's also possible to define the average time interval
+        between ticks, which is simply the inverse tick f^(-1) (t@{i}). The
+        tick frequency is sometimes taken as a proxy for the transaction volume
+        on the markets. For various reasons, caution should be applied when
+        drawing conclusions on volume from tick frequency though.
+        """)
 
     parser.add_argument ("-v", "--verbose",
         default=False, action="store_true",

@@ -22,8 +22,11 @@ from datetime import datetime
 def get_arguments () -> argparse.Namespace:
 
     parser = argparse.ArgumentParser (description=
-        "Loops over recorded ticks for simulation and training purposes with "
-        "the possibility to adjust the tick speed.")
+        """
+        Loops over recorded ticks for simulation and training purposes with
+        the possibility to adjust the tick speed. The simulated ticks need to
+        be fed via the standard input.
+        """)
 
     parser.add_argument ("-v", "--verbose",
         default=False, action="store_true",
