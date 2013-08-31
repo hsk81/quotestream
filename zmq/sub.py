@@ -20,7 +20,22 @@ from functools import reduce
 ###############################################################################
 
 def get_arguments () -> argparse.Namespace:
-    parser = argparse.ArgumentParser ()
+
+    parser = argparse.ArgumentParser (description=
+        """
+        Subscribes to a quote stream at an address. The following two protocols
+        are supported: TCP and IPC.
+        """, epilog=
+        """
+        The TCP protocol is meant for *inter* device communication and uses
+        addresses of the form `tcp://IP:PORT` where the IP is required to be a
+        concrete address - like 127.0.0.1 - to subscribe to; the PORT needs to
+        be the same like the port of the publisher.
+
+        For *intra* device communication the IPC protocol should be applied:
+        The address has the `ipc:///PATH/TO/SOCKET` form, where the path should
+        be a path to the UNIX socket of the publisher.
+        """)
 
     class attach (argparse.Action):
         """Appends values by *overwriting* initial defaults (if any)"""

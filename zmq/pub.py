@@ -20,7 +20,21 @@ from datetime import datetime
 
 def get_arguments () -> argparse.Namespace:
 
-    parser = argparse.ArgumentParser ()
+    parser = argparse.ArgumentParser (description=
+        """
+        Publishes a quote stream at an address. The following two protocols are
+        available: TCP and IPC.
+        """, epilog=
+        """
+        The TCP protocol is meant for *inter* device communication and uses
+        addresses of the form `tcp://IP:PORT` where an IP of `*` means that any
+        subscriber from any IP address can subscribe to; the PORT can be any
+        available port number.
+
+        For *intra* device communication the IPC protocol should be applied:
+        The address has the `ipc:///PATH/TO/SOCKET` form, where the path can be
+        any arbitrary path to a UNIX socket.
+        """)
 
     parser.add_argument ("-v", "--verbose",
         default=False, action="store_true",

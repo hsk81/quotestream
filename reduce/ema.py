@@ -48,8 +48,35 @@ if __name__ == "__main__":
         'result': 'ema'
     })
 
+    parser.description = \
+        """
+        Calculates the *exponential moving average* EMA directly from an
+        inhomogeneous time series: It requires two parameters where the first
+        is fixed as *timestamp* and the second can be chosen freely.
+        """
+
+    parser.epilog =\
+        """
+        The basic EMA is a simple linear operator. It is an averaging operator
+        with an exponentially decaying kernel: ema (t) = exp (-t/τ) / τ. The
+        time interval τ it the time range over which the actual averaging takes
+        place.
+
+        The EMA is very important, because its computation is very efficient
+        and other more complex operators can be built with it, such as moving
+        averages (MAs), differentials, derivatives, and volatilities.
+
+        The numerical evaluation is efficient because of the exponential form
+        of the kernel, which leads to a simple iterative formula: EMA [τ;z] =
+        μ·EMA (t@{n-1}) + (1-μ)·z@{n-1} with μ := exp ((t@{n-1} - t@{n})/τ).
+
+        We have chosen here the *previous point* interpolation scheme and have
+        omitted the *linear interpolation* and *next point* variations of the
+        formula.
+        """
+
     parser.add_argument ("-t", "--tau", default=ema.tau, type=float,
-        help="Time interval (default: %(default)s [s])")
+        help="time interval (default: %(default)s [s])")
 
     args = do.get_args (parser=parser)
     ema.tau = args.tau
