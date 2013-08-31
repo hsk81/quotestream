@@ -17,21 +17,20 @@ import numpy
 class ExpCallable (object):
 
     def __call__ (self, *args: list) -> numpy.array:
-        return numpy.exp (args).flatten ()
+        return numpy.exp (args)
 
     def __repr__ (self) -> str:
-        return 'exp ({0})'
+        return 'exp (@{0})'
 
 ###############################################################################
 ###############################################################################
 
 if __name__ == "__main__":
-
     args = do.get_arguments ({
-        'function': [[ExpCallable ()]]
+        'function': ExpCallable (), 'result': 'exp'
     })
 
-    try: do.loop (args.function, args.parameter_group, args.result,
+    try: do.loop (args.function, args.parameters, args.result,
         verbose=args.verbose)
 
     except KeyboardInterrupt:

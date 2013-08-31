@@ -20,63 +20,43 @@ from numpy import *
 ###############################################################################
 
 def get_arguments (defaults: dict=frozenset ({})) -> argparse.Namespace:
-
     parser = argparse.ArgumentParser ()
-
-    class attach (argparse.Action):
-        """Appends values by *overwriting* initial defaults (if any)"""
-        def __call__(self, parser, namespace, values, option_string=None):
-            items = getattr (namespace, self.dest, [])
-            if items == self.default:
-                setattr (namespace, self.dest, [values])
-            else:
-                setattr (namespace, self.dest, list (items) + [values])
 
     parser.add_argument ('-v', '--verbose',
         default=False, action='store_true',
         help='verbose logging (default: %(default)s)')
-    parser.add_argument ('-f', '--function', action=attach, nargs='+',
-        default=defaults['function'] if 'function' in defaults else [],
+    parser.add_argument ('-f', '--function',
+        default=defaults['function'] if 'function' in defaults else None,
         help='map function(s) (default: %(default)s)')
-    parser.add_argument ('-p', '--parameter-group', action=attach, nargs='+',
-        default=defaults['parameter-group'] if 'parameter-group' in defaults else [],
-        help='parameter group *per* result key (default: %(default)s)')
-    parser.add_argument ('-r', '--result', action=attach, nargs='+',
-        default=defaults['result'] if 'result' in defaults else [],
-        help='result keys (default: %(default)s)')
+    parser.add_argument ('-p', '--parameters', action='append', nargs='+',
+        default=defaults['parameters'] if 'parameters' in defaults else [],
+        help='function parameter key(s) (default: %(default)s)')
+    parser.add_argument ('-r', '--result',
+        default=defaults['result'] if 'result' in defaults else 'result',
+        help='result key (default: %(default)s)')
 
-    return process (parser.parse_args ())
+    return normalize (parser.parse_args ())
 
-def process (args: argparse.Namespace) -> argparse.Namespace:
-
-    args.function = list (
-        reduce (lambda a, b: a + b, args.function, []))
-    args.result = list (
-        reduce (lambda a, b: a + b, args.result, []))
-    args.parameter_group = list (map (lambda pg: list (
-        filter (lambda p: p != "", pg)), args.parameter_group))
-
-    diff = len (args.result) - len (args.function)
-    args.function += [args.function[-1] for _ in range (diff)]
-    diff = len (args.result) - len (args.parameter_group)
-    args.parameter_group += [[] for _ in range (diff)]
-
+def normalize (args: argparse.Namespace) -> argparse.Namespace:
+    args.parameters = reduce (lambda a, b: a + b, args.parameters, [])
     return args
 
 ###############################################################################
 ###############################################################################
 
-def loop (functions: list, parameter_groups: list, results: list,
-          verbose: bool=False) -> None:
+def loop (function, parameters, result: list, verbose: bool=False) -> None:
 
     for line in sys.stdin:
         tick = JSON.decode (line.replace ("'", '"'))
 
-        for item in zip (functions, parameter_groups, results):
-            function, parameter_group, result = item
-            args = map (lambda parameter: tick[parameter], parameter_group)
-            tick[result] = list (function (*args) if callable (function)
-                else eval (function.format (*args)))
+        if callable (function):
+            tick[result] = list (function (
+                *map (lambda p: tick[p], parameters)
+            ).flatten ())
+        else:
+            tick[result] = list (eval (function.format (
+                **{p: tick[p] for p in parameters}
+            )).fatten ())
 
         if verbose:
             now = datetime.fromtimestamp (tick['timestamp'])
@@ -88,10 +68,9 @@ def loop (functions: list, parameter_groups: list, results: list,
 ###############################################################################
 
 if __name__ == "__main__":
-
     args = get_arguments ()
 
-    try: loop (args.function, args.parameter_group, args.result,
+    try: loop (args.function, args.parameters, args.result,
         verbose=args.verbose)
 
     except KeyboardInterrupt:

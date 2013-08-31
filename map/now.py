@@ -10,28 +10,28 @@ __author__ = 'hsk81'
 
 import do
 import time
+import numpy
 
 ###############################################################################
 ###############################################################################
 
 class NowCallable (object):
 
-    def __call__ (self, *_: list) -> list:
-        return [time.time ()]
+    def __call__ (self, *args: list) -> numpy.array:
+        return numpy.array ([time.time ()])
 
     def __repr__ (self) -> str:
-        return 'time.time ()'
+        return '[time ()]'
 
 ###############################################################################
 ###############################################################################
 
 if __name__ == "__main__":
-
     args = do.get_arguments ({
-        'function': [[NowCallable ()]]
+        'function': NowCallable (), 'result': 'now'
     })
 
-    try: do.loop (args.function, args.parameter_group, args.result,
+    try: do.loop (args.function, args.parameters, args.result,
         verbose=args.verbose)
 
     except KeyboardInterrupt:

@@ -9,28 +9,32 @@ __author__ = 'hsk81'
 ###############################################################################
 
 import do
+import numpy
 
 ###############################################################################
 ###############################################################################
 
 class FloatCallable (object):
 
-    def __call__ (self, *args: list) -> map:
-        return map (float, args)
+    def __call__ (self, *args: list) -> numpy.array:
+        return numpy.array (list (map (float, args)))
 
     def __repr__ (self) -> str:
-        return 'map (float, {0})'
+        return 'map (float, @{0})'
 
 ###############################################################################
 ###############################################################################
 
 if __name__ == "__main__":
-
     args = do.get_arguments ({
-        'function': [[FloatCallable ()]]
+        'function': FloatCallable (), 'result': 'float'
     })
 
-    try: do.loop (args.function, args.parameter_group, args.result,
+    if args.result == 'float':
+        if len (args.parameters) > 0:
+            args.result = args.parameters[0]
+
+    try: do.loop (args.function, args.parameters, args.result,
         verbose=args.verbose)
 
     except KeyboardInterrupt:

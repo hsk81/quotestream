@@ -17,21 +17,20 @@ import numpy
 class DiffLogCallable (object):
 
     def __call__ (self, *args: list) -> numpy.array:
-        return numpy.diff (numpy.log (numpy.array (args).flatten ()))
+        return numpy.diff (numpy.log (args))
 
     def __repr__ (self) -> str:
-        return '[diff (log (array ({0}).flatten ()))]'
+        return 'diff (log (@{0}))'
 
 ###############################################################################
 ###############################################################################
 
 if __name__ == "__main__":
-
     args = do.get_arguments ({
-        'function': [[DiffLogCallable ()]]
+        'function': DiffLogCallable (), 'result': 'diff-log'
     })
 
-    try: do.loop (args.function, args.parameter_group, args.result,
+    try: do.loop (args.function, args.parameters, args.result,
         verbose=args.verbose)
 
     except KeyboardInterrupt:

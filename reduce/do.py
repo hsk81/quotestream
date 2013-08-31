@@ -50,7 +50,7 @@ def get_args_parser (defaults: dict=frozenset ({})) -> argparse.ArgumentParser:
     return parser
 
 def normalize (args: argparse.Namespace) -> argparse.Namespace:
-    args.parameters = reduce (lambda a, b: a + b, args.parameters)
+    args.parameters = reduce (lambda a, b: a + b, args.parameters, [])
     return args
 
 ###############################################################################
