@@ -21,7 +21,7 @@ class VolatilityCallable (object):
         self.scale = scale
         self.exponent = p
 
-    def __call__ (self, ts, values: list, last: list) -> numpy.array:
+    def __call__ (self, values: numpy.array, last=None) -> numpy.array:
 
         returns = values
         size = len (returns)
@@ -44,9 +44,7 @@ if __name__ == "__main__":
     volatility = VolatilityCallable (scale=1.0)
 
     parser = do.get_args_parser ({
-        'default': [0.0],
-        'function': volatility,
-        'stack-size': 2
+        'stack-size': 2, 'function': volatility, 'result': 'volatility'
     })
 
     ##
@@ -95,8 +93,8 @@ if __name__ == "__main__":
         numpy.sqrt (numpy.array (args.interval_scaled) / args.stack_size) \
             if args.scale is None else args.scale ## override `interval-scaled`
 
-    try: do.loop (args.function, args.parameter, args.stack_size, args.default,
-        args.result, verbose=args.verbose)
+    try: do.loop (args.function, args.parameters, args.stack_size,
+        args.default, args.result, verbose=args.verbose)
 
     except KeyboardInterrupt:
         pass

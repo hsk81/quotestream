@@ -19,7 +19,7 @@ class EmaCallable (object):
     def __init__ (self, tau: float) -> None:
         self._tau = tau
 
-    def __call__ (self, ts, values: list, last: list) -> numpy.array:
+    def __call__ (self, ts, values: numpy.array, last=None) -> numpy.array:
         mu = numpy.exp ((ts[1] - ts[0]) / self.tau)
         return mu * last[0] + (1.0 - mu) * values[0]
 
@@ -42,7 +42,10 @@ if __name__ == "__main__":
     ema = EmaCallable (tau=600) ## 10mins
 
     parser = do.get_args_parser ({
-        'stack-size': 2, 'function': ema
+        'stack-size': 2,
+        'function': ema,
+        'parameters': [['timestamp']],
+        'result': 'ema'
     })
 
     parser.add_argument ("-t", "--tau", default=ema.tau, type=float,
@@ -51,8 +54,8 @@ if __name__ == "__main__":
     args = do.get_args (parser=parser)
     ema.tau = args.tau
 
-    try: do.loop (args.function, args.parameter, args.stack_size, args.default,
-        args.result, verbose=args.verbose)
+    try: do.loop (args.function, args.parameters, args.stack_size,
+        args.default, args.result, verbose=args.verbose)
 
     except KeyboardInterrupt:
         pass
