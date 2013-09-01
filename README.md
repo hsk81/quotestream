@@ -1,4 +1,4 @@
-# Quote Stream -- FX Streaming Engine
+# Quote Stream - FX Streaming Engine
 
 This project is about a trading system for Bitcoins intended to be applied to the [Bitstamp.net](http://bitstamp.net) exchange. But it can also be used with other exchanges and on other kind of time series provided these are offered via a JSON based API.
 
@@ -6,7 +6,7 @@ The basic idea of the system is to model the trading quotes as a stream/pipe of 
 
 This approach has been loosely inspired by the UNIX approach, where the whole system is simply a collection of simple commands that do their job well. A crucial difference is though the fact the UNIX commands work in general on a hierarchical file system as a source and/or target of data, whereas here the quote stream is used as a carrier of data instead.
 
-## Quote Stream
+## Quote Structure
 
 The actual data in the stream is JSON-like, and some example quotations might look like the following:
 ``` json
@@ -31,15 +31,15 @@ This composition is true for the initial, unprocessed quote stream: Except for `
 
 ## Tool Chain
 
-Let's start with the most basic operation: Asking the exchange for quotes and recording them for later usage into a file. You do this with the `ticker.py` tool:
+Let's start with the most basic operation: Asking the exchange for quotes and recording them for later usage into a file. You do this with the `ticker` tool:
 ``` sh
-$ ./py ticker.py -v > log/ticks.log
+$ ./py ticker -v > log/ticks.log
 ```
 This tool polls the exchange's ticker URL almost every second and stores the reported quotes in `log/ticks.log`; plus thanks to the `-v` (--verbose) switch the quotes are also printed on the terminal.
 
 Each tool should have a `-h` (--help) switch, printing a short description what it's supposed to do and showing other optional or mandatory arguments. In the ideal case a tool should have optional arguments only, read from the standard input and write to the standard output.
 
-Although not always possible following this philosophy allows for a quick and simple "plumbing" of different tools together in a chain. Mandatory options can in the most cases avoided by using reasonable defaults, e.g.
+Although not always possible following this philosophy allows for a quick and simple "plumbing" of different tools together in a chain. Mandatory options can in the most cases avoided by using reasonable defaults, for example:
 ``` sh
 $ ./py ticker -h
 usage: ticker.py [-h] [-v] [-i INTERVAL] [-u URL]
@@ -63,7 +63,7 @@ Let's plunge into analyzing the following chain:
 ``` sh
 $ cat log/ticks.log | ./py filter -e high low -e bid ask -e volume | ./py map.float -p last -r last | ./py map.log -p last -r last | ./py simulate -a 0.001 | ./py zmq.pub -v > /dev/null
 ```
-It first takes the recorded ticks and prints them via the standard UNIX command `cat` to the standard output. Then in a second step, the `high`, `low`, `bid`, `ask` and `volume` components of each quote are *excluded* using the `filter.py` tool. In the next two steps the `last` value is mapped with `map.float` to a floating point number (from a string) and then with `map.log` to its logarithmic value.
+It first takes the recorded ticks and prints them via the standard UNIX command `cat` to the standard output. Then in a second step, the `high`, `low`, `bid`, `ask` and `volume` components of each quote are *excluded* using the `filter` tool. In the next two steps the `last` value is mapped with `map.float` to a floating point number (from a string) and then with `map.log` to its logarithmic value.
 
 The `simulate` tool ensures that the quote stream flows with a 1000 fold *acceleration* compared to its original real time speed. In this case the stream is actually slowed down, since otherwise without the simulator the tool chain would try  to process the stream as fast as possible, which is not always desirable since in general we'd like to have some CPU power left for other purposes.
 
@@ -93,11 +93,11 @@ $ ./py zmq.sub | ./py interpolate -i 1.200 | ./py reduce.diff -p last -r return 
 ```
 With `zmq.sub` we subscribe to the previously published stream by default assumed to be on the *local* machine at `tcp://127.0.0.1:8888`.
 
-Then we create with `interpolate.py` a homogeneous time series by sampling the stream every 1.2 seconds. Inhomogeneous to homogeneous time series conversion is a big subject in algorithmic trading, because many of the higher level operators assume a homogeneous interval between each quote in the stream. But this is only achievable via interpolation: The current implementation simply takes the most recent tick for an interpolated quote and does not try something more advanced like a linear interpolation.
+Then we create with `interpolate` a homogeneous time series by sampling the stream every 1.2 seconds. Inhomogeneous to homogeneous time series conversion is a big subject in algorithmic trading, because many of the higher level operators assume a homogeneous interval between each quote in the stream. But this is only achievable via interpolation: The current implementation simply takes the most recent tick for an interpolated quote and does not try something more advanced like a linear interpolation.
 
-Once we have a homogeneous stream, we calculate for each quote with `reduce/return.py` *overlapping* returns of the last corresponding 10 minutes (500 * 1.2 seconds). Calculating returns basically centers the time series around zero and plots only the consecutive (but overlapping) differences.
+Once we have a homogeneous stream, we calculate for each quote with `reduce.diff` *overlapping* returns of the last corresponding 10 minutes (500 * 1.2 seconds). Calculating returns basically centers the time series around zero and plots only the consecutive (but overlapping) differences.
 
-Based on the returns we can now calculate with `reduce.volatility` the activity for each 10 minute window of the quote stream. By default the so called *annualized volatility* is delivered. Once the calculation is done, we *move* (rename) the `volatility` component with `alias.py` to `lhs-volatility` (to avoid later a name clash).
+Based on the returns we can now calculate with `reduce.volatility` the activity for each 10 minute window of the quote stream. By default the so called *annualized volatility* is delivered. Once the calculation is done, we *move* (rename) the `volatility` component with `alias` to `lhs-volatility` (to avoid later a name clash).
 
 Finally we publish the stream again in a similar fashion like before; except this time we need to use the non default port `7777`, since the default has already been used.
 
@@ -137,9 +137,9 @@ Now it's time to do some cleanup and renaming:
 $ ./py zmq.sub -sub "tcp://127.0.0.1:7799" | grep "rhs-volatility" | ./py alias -m rhs-volatility volatility -v > data/lrv-ratio.log
 ```
 
-We again start with `zmq.sub` and subscribe to our quote stream (which has by now already been processed quite a bit). Then we remove with the UNIX command `grep` the quotes with `lhs-volatility`, since we don't need two volatility entries anymore, and rename the remaining `rhs-volatility` with `alias.py` to simply `volatility`.
+We again start with `zmq.sub` and subscribe to our quote stream (which has by now already been processed quite a bit). Then we remove with the UNIX command `grep` the quotes with `lhs-volatility`, since we don't need two volatility entries anymore, and rename the remaining `rhs-volatility` with `alias` to simply `volatility`.
 
-It might be a little confusing why we did not use the `filter.py` tool to exclude `lhs-volatility`; to understand why we need to look at the quote stream before and after this tool chain is applied to:
+It might be a little confusing why we did not use the `filter` tool to exclude `lhs-volatility`; to understand why we need to look at the quote stream before and after this tool chain is applied to:
 
 ``` json
 [2013-05-11 10:01:16.631573] {"return": [0.000512776696989], "ratio": [0.9458681141583831], "lhs-volatility": [1.002482455930246], "last": [4.762515756711868], "timestamp": 1368248476.631574}
@@ -172,7 +172,7 @@ Now it's time to run a simulation to test and analyze a relatively simple strate
 $ cat data/lrv-ratio.log | ./py map.exp -p last -r price | ./py trade.alpha -v > data/alpha.log
 ```
 
-First, we access our stored (and processed) quote stream via the UNIX command `cat` and exponentiate the `last` entry the get the original `price`, which we also need in the decision process of our trading strategy. The input to `trade/alpha.py` looks then like:
+First, we access our stored (and processed) quote stream via the UNIX command `cat` and exponentiate the `last` entry the get the original `price`, which we also need in the decision process of our trading strategy. The input to `trade.alpha` looks then like:
 
 ``` json
 {"return": [0.00025433428139200003], "timestamp": 1368232031.982519, "ratio": [0.9589355359453091], "volatility": [0.350167924307066], "price": [117.96999999999998], "last": [4.770430354853751]}
@@ -242,7 +242,7 @@ which again use the IPC protocol instead of TCP; again no measurable changes. Bu
 ``` sh
 ./py zmq.sub -a 'ipc:///tmp/7777' -a 'ipc:///tmp/9999' | ./py reduce.ratio -p lhs-volatility rhs-volatility -r ratio | grep "rhs-volatility" | ./py alias -m rhs-volatility volatility | ./py map.exp -p last -r price | ./py map.now -r now | ./py filter -i timestamp -i now | ./py reduce.diff -p now -r dt -n 2 > /tmp/dt.log
 ```
-which combines the former three tool chains into a single one and measures how fast the quote stream is flowing using `map/now.py` and `reduce/return.py` (which is a simple subtraction operation). We omitted `trade/alpha.py` to investigate how fast the system can process the quote stream just *before* feeding it into the actual trading strategy; plus in all cases we omitted verbose printing.
+which combines the former three tool chains into a single one and measures how fast the quote stream is flowing using `map.now` and `reduce.diff`. We omitted `trade.alpha` to investigate how fast the system can process the quote stream just *before* feeding it into the actual trading strategy; plus in all cases we omitted verbose printing.
 
 Chain combination/merging did help to improve performance by pushing the bulk of the measurements below 1ms towards 0.1ms. Our simulation tries to keep an average speed of 1ms, but we observe a range between 0.1ms and 100ms where the apparent average speed still hovers around 1ms.
 
