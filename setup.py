@@ -9,13 +9,13 @@ from distutils.core import setup
 ###############################################################################
 
 setup(
-    name='fx-bitstamp',
-    version='0.0.1',
+    name='quotestream',
+    version='0.0.2',
     license='GPLv3',
     author='Hasan Karahan',
     author_email='hasan.karahan81@gmail.com',
-    url='https://bitbucket.org/hsk81/fx-bitstamp',
-    description='Algorithmic trading on Bitstamp.net',
+    url='https://bitbucket.org/hsk81/quotestream',
+    description='Algorithmic Trading with Quote Stream',
 
     requires=[
         'ipython>=1.0.0',
