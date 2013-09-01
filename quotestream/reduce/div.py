@@ -14,7 +14,7 @@ import quotestream.reduce.do as do
 ###############################################################################
 ###############################################################################
 
-class RatioCallable (object):
+class DivCallable (object):
 
     def __init__ (self, default: list) -> None:
         self.default = numpy.array (default)
@@ -36,14 +36,21 @@ class RatioCallable (object):
 ###############################################################################
 
 if __name__ == "__main__":
-    ratio = RatioCallable (default=[1.0])
+    div = DivCallable (default=[1.0])
 
     parser = do.get_args_parser ({
-        'function': ratio, 'default': ratio.default, 'result': 'ratio'
+        'function': div, 'default': div.default, 'result': 'div'
     })
 
+    parser.description = \
+        """
+        Divides the first parameter by the second one. If the division is not a
+        number or is infinite (positive or negative) then the default value is
+        used.
+        """
+
     args = do.get_args (parser=parser)
-    ratio.default = args.default
+    div.default = args.default
 
     try: do.loop (args.function, args.parameters, args.stack_size,
         args.default, args.result, verbose=args.verbose)

@@ -8,9 +8,9 @@ __author__ = 'hsk81'
 ###############################################################################
 ###############################################################################
 
-import ujson as JSON
 import argparse
 import sys
+import ujson as JSON
 
 from datetime import datetime
 from functools import reduce
@@ -26,7 +26,28 @@ def get_args (defaults: dict=frozenset ({}),
         else get_args_parser (defaults=defaults).parse_args ())
 
 def get_args_parser (defaults: dict=frozenset ({})) -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser ()
+
+    parser = argparse.ArgumentParser (description=
+        """
+        Generic reducer: Applies a function on a moving window over the quote
+        stream. The function can be provided as a string or a Python callable:
+        The former option is used to test some function quickly on the command
+        line interface, while the latter is more enduring since the callable is
+        required to be coded.
+        """, epilog=
+        """
+        The reducer follows the standard pattern which is also used in Python:
+        ```result = reduce (function, iterable, default).``` The `iterable` is
+        the mentioned window and shifts with each invocation by one quote. It's
+        size can be controlled with `stack-size`: For small stack sizes the
+        reduction is fast and vice versa.
+
+        The `default` value is applied at the *start* of a reduction, where the
+        window size is smaller than the specified `stack size`. This handling
+        is completely different than the default usually used in reductions
+        where the latter kicks in at the end to provide the function a missing
+        parameter!
+        """)
 
     parser.add_argument ("-v", "--verbose",
         default=False, action="store_true",
