@@ -39,7 +39,7 @@ def get_arguments () -> argparse.Namespace:
     parser.add_argument ("-v", "--verbose",
         default=False, action="store_true",
         help="verbose logging (default: %(default)s)")
-    parser.add_argument ('-a', '--pub-address',
+    parser.add_argument ('-a', '--to-address',
         default='tcp://*:8888',
         help='publication address (default: %(default)s)')
 
@@ -76,7 +76,7 @@ if __name__ == "__main__":
     context = zmq.Context (1)
 
     try:
-        loop (context, args.pub_address, verbose=args.verbose)
+        loop (context, args.to_address, verbose=args.verbose)
     except KeyboardInterrupt:
         pass
 

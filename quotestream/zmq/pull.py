@@ -41,7 +41,7 @@ def get_arguments () -> argparse.Namespace:
     parser.add_argument ("-v", "--verbose",
         default=False, action="store_true",
         help="verbose logging (default: %(default)s)")
-    parser.add_argument ('-a', '--sub-address',
+    parser.add_argument ('-a', '--from-address',
         default=[['tcp://127.0.0.1:8888']], action=attach, nargs='+',
         help='subscription address (default: %(default)s)')
 
@@ -73,7 +73,10 @@ def loop (context: zmq.Context, addresses: list, verbose: bool=False) -> None:
 
 def normalize (args: argparse.Namespace) -> argparse.Namespace:
 
-    args.sub_address = list (reduce (lambda a, b: a + b, args.sub_address, []))
+    args.from_address = list (reduce (
+        lambda a, b: a + b, args.from_address, []
+    ))
+
     return args
 
 ###############################################################################
@@ -85,7 +88,7 @@ if __name__ == "__main__":
     context = zmq.Context (1)
 
     try:
-        loop (context, args.sub_address, verbose=args.verbose)
+        loop (context, args.from_address, verbose=args.verbose)
     except KeyboardInterrupt:
         pass
 
