@@ -108,8 +108,8 @@ class Stack (object):
 ###############################################################################
 ###############################################################################
 
-def loop (function, parameters, stack_size, default, result: list,
-          verbose: bool=False) -> None:
+def loop (function: str or callable, parameters: list, stack_size: int,
+          default: str or float, result: str, verbose: bool=False) -> None:
 
     stacks = [Stack (size=stack_size) for _ in parameters]
     tick = None
