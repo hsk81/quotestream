@@ -240,7 +240,7 @@ $ ./py zmq.sub -a 'ipc:///tmp/8888' | ./py interpolate -i 1.000 | ./py reduce.di
 which again use the IPC protocol instead of TCP; again no measurable changes. But then we used the following tool chain
 
 ``` sh
-./py zmq.sub -a 'ipc:///tmp/7777' -a 'ipc:///tmp/9999' | ./py reduce.ratio -p lhs-volatility rhs-volatility -r ratio | grep "rhs-volatility" | ./py alias -m rhs-volatility volatility | ./py map.exp -p last -r price | ./py map.now -r now | ./py filter -i timestamp -i now | ./py reduce.diff -p now -r dt -n 2 > /tmp/dt.log
+./py zmq.sub -a 'ipc:///tmp/7777' -a 'ipc:///tmp/9999' | ./py interleave.div -p lhs-volatility rhs-volatility -r ratio | grep "rhs-volatility" | ./py alias -m rhs-volatility volatility | ./py map.exp -p last -r price | ./py map.now -r now | ./py filter -i timestamp -i now | ./py reduce.diff -p now -r dt -n 2 > /tmp/dt.log
 ```
 which combines the former three tool chains into a single one and measures how fast the quote stream is flowing using `map.now` and `reduce.diff`. We omitted `trade.alpha` to investigate how fast the system can process the quote stream just *before* feeding it into the actual trading strategy; plus in all cases we omitted verbose printing.
 
