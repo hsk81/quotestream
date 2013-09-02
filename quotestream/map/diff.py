@@ -10,18 +10,17 @@ __author__ = 'hsk81'
 
 import numpy
 import quotestream.map.do as do
-import time
 
 ###############################################################################
 ###############################################################################
 
-class NowCallable (object):
+class DiffCallable (object):
 
     def __call__ (self, *args: [numpy.array], last=None) -> numpy.array:
-        return numpy.array ([time.time ()])
+        return numpy.diff (numpy.array (args).flatten ())
 
     def __repr__ (self) -> str:
-        return '[time ()]'
+        return 'diff (@{0})'
 
 ###############################################################################
 ###############################################################################
@@ -29,9 +28,7 @@ class NowCallable (object):
 if __name__ == "__main__":
 
     parser = do.get_args_parser ({
-        'function': NowCallable (),
-        'parameters': [['timestamp']], ## required dummy!
-        'result': 'now'
+        'function': DiffCallable (), 'result': 'diff'
     })
 
     parser.description = \

@@ -8,36 +8,41 @@ __author__ = 'hsk81'
 ###############################################################################
 ###############################################################################
 
-import datetime as dt
 import numpy
 import quotestream.map.do as do
 
 ###############################################################################
 ###############################################################################
 
-class FromTimestampCallable (object):
+class DivCallable (object):
 
-    def __call__ (self, *args: list) -> numpy.array:
-        return numpy.array (list (
-            map (str, map (dt.datetime.fromtimestamp, args))
-        ))
+    def __call__ (self, *args: [numpy.array], last: list=None) -> numpy.array:
+        return numpy.divide (*args)
 
-    def __repr__ (self) -> str:
-
-        return 'map (str, map (from-timestamp (@{0}))'
+    def __repr__ (self):
+        return 'div (*@{0})'
 
 ###############################################################################
 ###############################################################################
 
 if __name__ == "__main__":
-    args = do.get_arguments ({
-        'function': FromTimestampCallable (),
-        'parameters': [['timestamp']],
-        'result': '@timestamp'
+
+    parser = do.get_args_parser ({
+        'function': DivCallable (), 'result': 'div'
     })
 
-    try: do.loop (args.function, args.parameters, args.result,
-        verbose=args.verbose)
+    parser.description = \
+        """
+        """
+
+    parser.epilog = \
+        """
+        """
+
+    args = do.get_args (parser=parser)
+
+    try: do.loop (args.function, args.parameters, args.stack_size,
+        args.default, args.result, verbose=args.verbose)
 
     except KeyboardInterrupt:
         pass

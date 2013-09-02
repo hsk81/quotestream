@@ -14,24 +14,35 @@ import quotestream.map.do as do
 ###############################################################################
 ###############################################################################
 
-class InverseCallable (object):
+class SqrtCallable (object):
 
-    def __call__ (self, *args: list) -> numpy.array:
-        return 1.0 / numpy.array (args)
+    def __call__ (self, *args: [numpy.array], last=None) -> numpy.array:
+        return numpy.sqrt (args)
 
     def __repr__ (self) -> str:
-        return '1.0 / @{0}'
+        return 'sqrt (@{0})'
 
 ###############################################################################
 ###############################################################################
 
 if __name__ == "__main__":
-    args = do.get_arguments ({
-        'function': InverseCallable (), 'result': 'inverse'
+
+    parser = do.get_args_parser ({
+        'function': SqrtCallable (), 'result': 'sqrt'
     })
 
-    try: do.loop (args.function, args.parameters, args.result,
-        verbose=args.verbose)
+    parser.description = \
+        """
+        """
+
+    parser.epilog = \
+        """
+        """
+
+    args = do.get_args (parser=parser)
+
+    try: do.loop (args.function, args.parameters, args.stack_size,
+        args.default, args.result, verbose=args.verbose)
 
     except KeyboardInterrupt:
         pass

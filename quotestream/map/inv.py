@@ -9,48 +9,37 @@ __author__ = 'hsk81'
 ###############################################################################
 
 import numpy
-import quotestream.reduce.do as do
+import quotestream.map.do as do
 
 ###############################################################################
 ###############################################################################
 
-class DivCallable (object):
+class LogCallable (object):
 
-    def __init__ (self, default: list) -> None:
-        self.default = numpy.array (default)
+    def __call__ (self, *args: [numpy.array], last=None) -> numpy.array:
+        return 1.0 / numpy.array (args)
 
-    def __call__ (self, lhs, rhs: numpy.array, last: list=None) -> numpy.array:
-        quotient = lhs[0] / rhs[0]
-
-        if numpy.isnan (quotient):
-            quotient = self.default
-        if numpy.isposinf (quotient) or numpy.isneginf (quotient):
-            quotient = self.default
-
-        return quotient
-
-    def __repr__ (self):
-        return '@{0}["numerator"] / @{0}["denominator"]'
+    def __repr__ (self) -> str:
+        return 'log (@{0})'
 
 ###############################################################################
 ###############################################################################
 
 if __name__ == "__main__":
-    div = DivCallable (default=[1.0])
 
     parser = do.get_args_parser ({
-        'function': div, 'default': div.default, 'result': 'div'
+        'function': LogCallable (), 'result': 'inv'
     })
 
     parser.description = \
         """
-        Divides the first parameter by the second one. If the division is not a
-        number or is infinite (positive or negative) then the default value is
-        used.
+        """
+
+    parser.epilog = \
+        """
         """
 
     args = do.get_args (parser=parser)
-    div.default = args.default
 
     try: do.loop (args.function, args.parameters, args.stack_size,
         args.default, args.result, verbose=args.verbose)

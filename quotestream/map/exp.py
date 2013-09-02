@@ -16,7 +16,7 @@ import quotestream.map.do as do
 
 class ExpCallable (object):
 
-    def __call__ (self, *args: list) -> numpy.array:
+    def __call__ (self, *args: [numpy.array], last=None) -> numpy.array:
         return numpy.exp (args)
 
     def __repr__ (self) -> str:
@@ -26,12 +26,23 @@ class ExpCallable (object):
 ###############################################################################
 
 if __name__ == "__main__":
-    args = do.get_arguments ({
+
+    parser = do.get_args_parser ({
         'function': ExpCallable (), 'result': 'exp'
     })
 
-    try: do.loop (args.function, args.parameters, args.result,
-        verbose=args.verbose)
+    parser.description = \
+        """
+        """
+
+    parser.epilog = \
+        """
+        """
+
+    args = do.get_args (parser=parser)
+
+    try: do.loop (args.function, args.parameters, args.stack_size,
+        args.default, args.result, verbose=args.verbose)
 
     except KeyboardInterrupt:
         pass

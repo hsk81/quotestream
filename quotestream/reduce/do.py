@@ -95,10 +95,7 @@ class Stack (object):
         self._list.insert (key, item)
 
     def put (self, item: float or list) -> None:
-        if isinstance (item, list):
-            self[0] = item[0]
-        else:
-            self[0] = item
+        self[0] = item
 
     @property
     def as_array (self) -> list:
