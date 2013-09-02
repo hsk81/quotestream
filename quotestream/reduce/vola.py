@@ -23,19 +23,16 @@ class VolatilityCallable (object):
 
     def __call__ (self, values: numpy.array, last=None) -> numpy.array:
 
-        returns = values
-        size = len (returns)
-        weights = [self.exponent] * size
-
-        absolutes = numpy.absolute (returns)
-        average = numpy.average (absolutes, weights=weights, axis=0) / size
+        absolutes = numpy.absolute (values)
+        powers = numpy.power (absolutes, self.exponent)
+        average = numpy.average (powers, axis=0)
         power = numpy.power (average, 1.0 / self.exponent)
 
         return power * self.scale
 
     def __repr__ (self):
 
-        return 'volatility for dt=1s, n=600 and p=2.0'
+        return '⟨|@{0}|^p⟩^(1/p)'
 
 ###############################################################################
 ###############################################################################
@@ -44,7 +41,7 @@ if __name__ == "__main__":
     volatility = VolatilityCallable (scale=1.0)
 
     parser = do.get_args_parser ({
-        'stack-size': 2, 'function': volatility, 'result': 'volatility'
+        'stack-size': 2, 'function': volatility, 'result': 'vola'
     })
 
     ##
