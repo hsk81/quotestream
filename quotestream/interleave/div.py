@@ -14,18 +14,21 @@ import quotestream.interleave.do as do
 ###############################################################################
 ###############################################################################
 
-class RatioCallable (object):
+class DivCallable (object):
+
+    def __init__ (self, default):
+        self.default = default
 
     def __call__ (self, *args: [numpy.array], last=None) -> numpy.array:
+        result = numpy.divide (*args)
 
-     ## if isnan (tick[result]):
-     ##     tick[result] = list (
-     ##         eval (default) if type (default) is str else default)
-     ## if isposinf (tick[result]) or isneginf (tick[result]):
-     ##     tick[result] = list (
-     ##         eval (default) if type (default) is str else default)
+        if numpy.isposinf (result) or numpy.isneginf (result) or \
+           numpy.isnan (result):
 
-        return numpy.divide (*args)
+            result = numpy.array (eval (self.default)
+                if type (self.default) is str else self.default)
+
+        return result
 
     def __repr__ (self) -> str:
         return 'divide (@{0})'
@@ -34,9 +37,10 @@ class RatioCallable (object):
 ###############################################################################
 
 if __name__ == "__main__":
+    div = DivCallable (default=[1.0])
 
     parser = do.get_args_parser ({
-        'function': RatioCallable (), 'result': 'div'
+        'function': div, 'default': div.default, 'result': 'div'
     })
 
     parser.description = \
@@ -48,6 +52,7 @@ if __name__ == "__main__":
         """
 
     args = do.get_args (parser=parser)
+    div.default = args.default
 
     try: do.loop (args.function, args.parameters, args.default, args.result,
         verbose=args.verbose)
