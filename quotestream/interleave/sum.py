@@ -9,18 +9,18 @@ __author__ = 'hsk81'
 ###############################################################################
 
 import numpy
-import quotestream.map.do as do
+import quotestream.interleave.do as do
 
 ###############################################################################
 ###############################################################################
 
-class LogSqrtProdCallable (object):
+class SumCallable (object):
 
     def __call__ (self, *args: [numpy.array], last=None) -> numpy.array:
-        return numpy.log (numpy.sqrt (numpy.prod (args)))
+        return numpy.sum (numpy.array (args).flatten ())
 
     def __repr__ (self) -> str:
-        return 'log (sqrt (prod (@{0})))'
+        return 'sum (@{0})'
 
 ###############################################################################
 ###############################################################################
@@ -28,7 +28,7 @@ class LogSqrtProdCallable (object):
 if __name__ == "__main__":
 
     parser = do.get_args_parser ({
-        'function': LogSqrtProdCallable (), 'result': 'log-sqrt-prod'
+        'function': SumCallable (), 'result': 'sum'
     })
 
     parser.description = \
@@ -41,8 +41,8 @@ if __name__ == "__main__":
 
     args = do.get_args (parser=parser)
 
-    try: do.loop (args.function, args.parameters, args.stack_size,
-        args.default, args.result, verbose=args.verbose)
+    try: do.loop (args.function, args.parameters, args.default, args.result,
+        verbose=args.verbose)
 
     except KeyboardInterrupt:
         pass
