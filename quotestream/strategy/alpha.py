@@ -57,7 +57,7 @@ def loop (balance, fee, quota, verbose: bool=False) -> None:
         ratio = array (0.382 * ratio + 0.618 * array (tick['ratio']))
         ret = array (0.382 * ret + 0.618 * array (tick['return']))
 
-        if ratio > 1.75: ## trend
+        if ratio > 2.50: ## trend
 
             if ret > 0.0: ## positive
                 btc += quota * usd / tick['price'] * (1.0 - fee)
