@@ -19,9 +19,15 @@ class EmaCallable (object):
     def __init__ (self, tau: float) -> None:
         self._tau = tau
 
-    def __call__ (self, ts, values: numpy.array, last=None) -> numpy.array:
+    def __call__ (self, ts: numpy.array, *args: [numpy.array],
+                  last: list=None) -> numpy.array:
+
         mu = numpy.exp ((ts[1] - ts[0]) / self.tau)
-        return mu * last[0] + (1.0 - mu) * values[0]
+        nu = 1.0 - mu
+
+        return numpy.array ([
+            mu * el + nu * arr[0] for el, arr in zip (last, args)
+        ])
 
     def __repr__ (self) -> str:
         return 'μ·EMA (t@{n-1}) + (1-μ)·z@{n-1} | ' \
@@ -45,6 +51,7 @@ if __name__ == "__main__":
         'stack-size': 2,
         'function': ema,
         'parameters': [['timestamp']],
+        'default': [0.0, 0.0],
         'result': 'ema'
     })
 
@@ -80,6 +87,10 @@ if __name__ == "__main__":
 
     args = do.get_args (parser=parser)
     ema.tau = args.tau
+
+    if isinstance (args.default, list):
+        dsz = len (args.parameters) - len (args.default)
+        for _ in range (dsz): args.default.append (0.0)
 
     try: do.loop (args.function, args.parameters, args.stack_size,
         args.default, args.result, verbose=args.verbose)
