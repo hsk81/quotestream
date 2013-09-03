@@ -14,13 +14,13 @@ import quotestream.map.do as do
 ###############################################################################
 ###############################################################################
 
-class DiffLogCallable (object):
+class SumCallable (object):
 
     def __call__ (self, *args: [numpy.array], last=None) -> numpy.array:
-        return numpy.diff (numpy.log (numpy.array (args).flatten ()))
+        return numpy.sum (numpy.array (args).flatten ())
 
     def __repr__ (self) -> str:
-        return 'diff (log (@{0}))'
+        return 'prod (@{0})'
 
 ###############################################################################
 ###############################################################################
@@ -28,7 +28,7 @@ class DiffLogCallable (object):
 if __name__ == "__main__":
 
     parser = do.get_args_parser ({
-        'function': DiffLogCallable (), 'result': 'diff-log'
+        'function': SumCallable (), 'result': 'sum'
     })
 
     parser.description = \
