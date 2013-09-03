@@ -61,7 +61,7 @@ optional arguments:
 
 Let's plunge into analyzing the following chain:
 ``` sh
-$ cat log/ticks.log | ./py filter -e high low -e bid ask -e volume | ./py map.float -p last -r last | ./py map.log -p last -r last | ./py simulate -a 0.001 | ./py zmq.pub -v > /dev/null
+$ cat log/ticks.log | ./py filter -e high low -e bid ask -e volume | ./py map.float -p last | ./py map.log -p last | ./py sim -a 0.001 | ./py zmq.pub -v > /dev/null
 ```
 It first takes the recorded ticks and prints them via the standard UNIX command `cat` to the standard output. Then in a second step, the `high`, `low`, `bid`, `ask` and `volume` components of each quote are *excluded* using the `filter` tool. In the next two steps the `last` value is mapped with `map.float` to a floating point number (from a string) and then with `map.log` to its logarithmic value.
 
@@ -77,19 +77,19 @@ As a summary, quotes provided to the tool chain as input look like this:
 ```
 The published output on the TCP port looks like this:
 ``` json
-{"timestamp": 1368230927.929788, "last": [4.768139014266231]}
+{"timestamp": 1368230927.929788, "last": [117.80], "log": [4.768139014266231]}
 ```
 And the output we see on the terminal looks like this:
 ``` json
-[2013-05-11 04:59:03.756901] {"timestamp": 1368230343.756902, "last": [4.768988271217486]}
+[2013-05-11 04:59:03.756901] {"timestamp": 1368230343.756902, "last": [117.80], "last": [4.768988271217486]}
 ```
 We have thrown away everything we're not interested in and have mapped the `last` component with the *logarithm* function. The reason behind using the logarithm instead of the original value is due to some advantageous mathematical properties.
 
 ### Subscribe, Interpolate, Return, Volatility, Alias and Publish
 
-Now, it's time to aplly some advanced operations:
+Now, it's time to apply some advanced operations:
 ``` sh
-$ ./py zmq.sub | ./py interpolate -i 1.200 | ./py reduce.diff -p last -r return -n 500 | ./py reduce.volatility -p return -r volatility -n 500 | ./py alias -m volatility lhs-volatility | ./py zmq.pub -a "tcp://*:7777" -v > /dev/null ## "*" implies on any IP address
+$ ./py zmq.sub | ./py interpolate -i 1.200 | ./py reduce.diff -p log -n 500 | ./py reduce.vola -p diff -n 500 | ./py alias -m vola lhs-vola | ./py zmq.pub -a "tcp://*:7777" -v > /dev/null ## "*" implies on any IP address
 ```
 With `zmq.sub` we subscribe to the previously published stream by default assumed to be on the *local* machine at `tcp://127.0.0.1:8888`.
 
@@ -97,15 +97,15 @@ Then we create with `interpolate` a homogeneous time series by sampling the stre
 
 Once we have a homogeneous stream, we calculate for each quote with `reduce.diff` *overlapping* returns of the last corresponding 10 minutes (500 * 1.2 seconds). Calculating returns basically centers the time series around zero and plots only the consecutive (but overlapping) differences.
 
-Based on the returns we can now calculate with `reduce.volatility` the activity for each 10 minute window of the quote stream. By default the so called *annualized volatility* is delivered. Once the calculation is done, we *move* (rename) the `volatility` component with `alias` to `lhs-volatility` (to avoid later a name clash).
+Based on the returns we can now calculate with `reduce.vola` the activity for each 10 minute window of the quote stream. By default the so called *annualized volatility* is delivered. Once the calculation is done, we *move* (rename) the `vola` component with `alias` to `lhs-vola` (to avoid later a name clash).
 
 Finally we publish the stream again in a similar fashion like before; except this time we need to use the non default port `7777`, since the default has already been used.
 
 Second volatility calculation:
 ``` sh
-$ ./py zmq.sub | ./py interpolate -i 1.000 | ./py reduce.diff -p last -r return -n 600 | ./py reduce.volatility -p return -r volatility -n 600 | ./py alias -m volatility rhs-volatility | ./py zmq.pub -a "tcp://*:9999" -v > /dev/null ## "*" implies on any IP address
+$ ./py zmq.sub | ./py interpolate -i 1.000 | ./py reduce.diff -p log -n 600 | ./py reduce.vola -p diff -n 600 | ./py alias -m vola rhs-vola | ./py zmq.pub -a "tcp://*:9999" -v > /dev/null ## "*" implies on any IP address
 ```
-For reasons to explained later we *repeat* the previous calculation, but this time our interpolation interval is 1.0 second, and we store the volatility in `rhs-volatility`. The following image shows the effect of changing the interpolation interval and calculating the corresponding volatilities:
+For reasons to explained later we *repeat* the previous calculation, but this time our interpolation interval is 1.0 second, and we store the volatility in `rhs-vola`. The following image shows the effect of changing the interpolation interval and calculating the corresponding volatilities:
 
 ![Volatility Plot](http://db.tt/Vo7Ls9tp "Logarithms, Returns and Volatilities")
 
@@ -115,11 +115,11 @@ The plot shows the logarithm, return and volatility for *three* different interp
 
 So we have now *two* volatility time series, and would like to bring them together:
 ``` sh
-$ ./py zmq.sub -a "tcp://127.0.0.1:7777" -a "tcp://127.0.0.1:9999" | ./py reduce.ratio -p lhs-volatility rhs-volatility -r ratio | ./py zmq.pub -a "tcp://*:7799" -v > /dev/null ## "*" implies on any IP address
+$ ./py zmq.sub -a "tcp://127.0.0.1:7777" -a "tcp://127.0.0.1:9999" | ./py interleave.div -p lhs-vola rhs-vola | ./py zmq.pub -a "tcp://*:7799" -v > /dev/null ## "*" implies on any IP address
 ```
 First with `zmq.sub` we subscribe to *both* streams at `tcp://127.0.0.1:7777` and `tcp://127.0.0.1:9999`: The subscription is fair in the sense that it tries to take alternatively from each input queue as long as each queue has a quote to deliver.
 
-The `reduce.ratio` divides the `lhs-volatility` with `rhs-volatility` values; since these two volatilities are slightly off from each other (due to different interpolations), we actually end up calculating a **trend indicator**: If the ratio is higher than one we have a positive or negative trend, if it hovers around one there is no trend, and if it is less then one then we should observe a mean reverting behavior. The following figure shows this quite clearly:
+The `reduce.div` divides the `lhs-vola` with `rhs-vola` values; since these two volatilities are slightly off from each other (due to different interpolations), we actually end up calculating a **trend indicator**: If the ratio is higher than one we have a positive or negative trend, if it hovers around one there is no trend, and if it is less then one then we should observe a mean reverting behavior. The following figure shows this quite clearly:
 
 ![Ratio Plot](http://db.tt/iDQNvyLK "USD Price (B), Log Returns (R), PnL Percent (C), Volatility Ratio (M), BTC & USD Account (M&Y), Volatility (G)")
 
@@ -127,68 +127,68 @@ The figure shows a period of about 30 days, and has the following sub-plots char
 
 + The `blue` plot shows the original price for Bitcoins denominated in US dollars; the `red` plot show the logarithmic returns of the price; the `cyan` plot and the plot immediately below it with the two `magenta` and `yellow` plots show the performance and behavior of of a trading strategy which is based on the volatility ratio and which we'll analyze in detail below; the `magenta` plot (2nd column and row) shows the volatility ratio: it's not extremely clear cut, but when you look at the peaks which are above the value of 2.0 then you can observe  in most cases also a corresponding trend in the original price; the `green` plot displays the price volatility.
 
-Once the trend indicator (named simply as `ratio`) is calculated, we publish it with `zmq.pub` on the port `7799` and print verbosely the current stream on the terminal.
+Once the trend indicator (named simply as `div`) is calculated, we publish it with `zmq.pub` on the port `7799` and print verbosely the current stream on the terminal.
 
 ### Subscribe, Grep and Alias
 
 Now it's time to do some cleanup and renaming:
 
 ``` sh
-$ ./py zmq.sub -sub "tcp://127.0.0.1:7799" | grep "rhs-volatility" | ./py alias -m rhs-volatility volatility -v > data/lrv-ratio.log
+$ ./py zmq.sub -a "tcp://127.0.0.1:7799" | grep "rhs-vola" | ./py alias -m rhs-vola vola -v > data/lrv-ratio.log
 ```
 
-We again start with `zmq.sub` and subscribe to our quote stream (which has by now already been processed quite a bit). Then we remove with the UNIX command `grep` the quotes with `lhs-volatility`, since we don't need two volatility entries anymore, and rename the remaining `rhs-volatility` with `alias` to simply `volatility`.
+We again start with `zmq.sub` and subscribe to our quote stream (which has by now already been processed quite a bit). Then we remove with the UNIX command `grep` the quotes with `lhs-vola`, since we don't need two volatility entries anymore, and rename the remaining `rhs-vola` with `alias` to simply `vola`.
 
-It might be a little confusing why we did not use the `filter` tool to exclude `lhs-volatility`; to understand why we need to look at the quote stream before and after this tool chain is applied to:
+It might be a little confusing why we did not use the `filter` tool to exclude `lhs-vola`; to understand why we need to look at the quote stream before and after this tool chain is applied to:
 
 ``` json
-[2013-05-11 10:01:16.631573] {"return": [0.000512776696989], "ratio": [0.9458681141583831], "lhs-volatility": [1.002482455930246], "last": [4.762515756711868], "timestamp": 1368248476.631574}
-[2013-05-11 09:41:28.056668] {"return": [0.013604480532464], "ratio": [0.9466786310311711], "last": [4.761575465152227], "rhs-volatility": [1.058946957362173], "timestamp": 1368247288.056668}
-[2013-05-11 09:41:28.056668] {"return": [0.013604480532464], "ratio": [0.9474912350833481], "last": [4.761575465152227], "rhs-volatility": [1.058038764698504], "timestamp": 1368247288.056668}
-[2013-05-11 10:01:26.646501] {"return": [0.000512776696989], "ratio": [0.9457270087825611], "lhs-volatility": [1.000615836114313], "last": [4.762515756711868], "timestamp": 1368248486.646501}
-[2013-05-11 09:41:28.056668] {"return": [0.013604480532464], "ratio": [0.9465401920177001], "last": [4.761575465152227], "rhs-volatility": [1.057129791796101], "timestamp": 1368247288.056668}
-[2013-05-11 10:01:26.646501] {"return": [0.000512776696989], "ratio": [0.944771148642325], "lhs-volatility": [0.9987457276592241], "last": [4.762515756711868], "timestamp": 1368248486.646501}
+[2013-05-11 10:01:16.631573] {"diff": [0.000512776696989], "div": [0.9458681141583831], "lhs-vola": [1.002482455930246], "log": [4.762515756711868], "timestamp": 1368248476.631574}
+[2013-05-11 09:41:28.056668] {"diff": [0.013604480532464], "div": [0.9466786310311711], "log": [4.761575465152227], "rhs-vola": [1.058946957362173], "timestamp": 1368247288.056668}
+[2013-05-11 09:41:28.056668] {"diff": [0.013604480532464], "div": [0.9474912350833481], "log": [4.761575465152227], "rhs-vola": [1.058038764698504], "timestamp": 1368247288.056668}
+[2013-05-11 10:01:26.646501] {"diff": [0.000512776696989], "div": [0.9457270087825611], "lhs-vola": [1.000615836114313], "log": [4.762515756711868], "timestamp": 1368248486.646501}
+[2013-05-11 09:41:28.056668] {"diff": [0.013604480532464], "div": [0.9465401920177001], "log": [4.761575465152227], "rhs-vola": [1.057129791796101], "timestamp": 1368247288.056668}
+[2013-05-11 10:01:26.646501] {"diff": [0.000512776696989], "div": [0.944771148642325], "lhs-vola": [0.9987457276592241], "log": [4.762515756711868], "timestamp": 1368248486.646501}
 ...
 ```
 
-As you can see the `lhs-volatility` and `rhs-volatility` quote stream are not really merged, but simply *interleaved*! Therefore just excluding `lhs-volatility` would be the wrong approach, since then we'd end up with some quotes which don't have *any* volatility information left; that's why we have to completely remove on sub-stream and continue with the remaining one.
+As you can see the `lhs-vola` and `rhs-vola` quote stream are not really merged, but simply *interleaved*! Therefore just excluding `lhs-vola would be the wrong approach, since then we'd end up with some quotes which don't have *any* volatility information left; that's why we have to completely remove on sub-stream and continue with the remaining one.
 
 Well, after the application of the tool chain we get:
 
 ``` json
-[2013-05-11 09:41:28.056668] {"volatility": [1.061764501517898], "timestamp": 1368247288.056668, "last": [4.761575465152227], "ratio": [0.9530805730440061], "return": [0.013604480532464]}
-[2013-05-11 09:41:28.056668] {"volatility": [1.061430109754043], "timestamp": 1368247288.056668, "last": [4.761575465152227], "ratio": [0.9518803908740491], "return": [0.013604480532464]}
-[2013-05-11 09:41:28.056668] {"volatility": [1.061095612610575], "timestamp": 1368247288.056668, "last": [4.761575465152227], "ratio": [0.950677177059818], "return": [0.013604480532464]}
+[2013-05-11 09:41:28.056668] {"vola": [1.061764501517898], "timestamp": 1368247288.056668, "log": [4.761575465152227], "div": [0.9530805730440061], "diff": [0.013604480532464]}
+[2013-05-11 09:41:28.056668] {"vola": [1.061430109754043], "timestamp": 1368247288.056668, "log": [4.761575465152227], "div": [0.9518803908740491], "diff": [0.013604480532464]}
+[2013-05-11 09:41:28.056668] {"vola": [1.061095612610575], "timestamp": 1368247288.056668, "log": [4.761575465152227], "div": [0.950677177059818], "diff": [0.013604480532464]}
 ...
 ```
 
-Finally, we print verbosely again the quote stream on the terminal, *and* we store our calculations into a file. We could have simply published it again and continued with the new quote stream, but I wanted to simulate based on the `ratio` and `volatility` entries various trading strategies: It does not make sense to calculate again and again these two numbers during development. In a production environment wiring this stage of the quote stream directly with the next one (via `zmq.pub` and `zmq.sub`) makes of course sense, and such a buffering into a file is not required.
+Finally, we print verbosely again the quote stream on the terminal, *and* we store our calculations into a file. We could have simply published it again and continued with the new quote stream, but I wanted to simulate based on the `ratio` and `vola` entries various trading strategies: It does not make sense to calculate again and again these two numbers during development. In a production environment wiring this stage of the quote stream directly with the next one (via `zmq.pub` and `zmq.sub`) makes of course sense, and such a buffering into a file is not required.
 
 ### Cat, Exponentiate, and Alpha Sim
 
 Now it's time to run a simulation to test and analyze a relatively simple strategy:
 
 ```
-$ cat data/lrv-ratio.log | ./py map.exp -p last -r price | ./py trade.alpha -v > data/alpha.log
+$ cat data/lrv-ratio.log | ./py map.exp -p log | ./py trade.alpha -v > data/alpha.log
 ```
 
 First, we access our stored (and processed) quote stream via the UNIX command `cat` and exponentiate the `last` entry the get the original `price`, which we also need in the decision process of our trading strategy. The input to `trade.alpha` looks then like:
 
 ``` json
-{"return": [0.00025433428139200003], "timestamp": 1368232031.982519, "ratio": [0.9589355359453091], "volatility": [0.350167924307066], "price": [117.96999999999998], "last": [4.770430354853751]}
+{"diff": [0.00025433428139200003], "timestamp": 1368232031.982519, "div": [0.9589355359453091], "vola": [0.350167924307066], "exp": [117.96999999999998], "log": [4.770430354853751]}
 ```
 So, we have now the following components of a quote:
 
-+ `price`: the original, most recent price for a Bitcoin in US dollars;
-+ `last`: the logarithm of the most recent price;
-+ `return`: 10 minute overlapping differences of `last`;
-+ `volatility`: 10 minute activity ("variance") of `return`;
-+ `ratio`: trend indicator with *one plus* for a trend, *around one* for no trend and *one minus* for a mean reverting time series;
++ `exp`: the original, most recent price for a Bitcoin in US dollars;
++ `log`: the logarithm of the most recent price;
++ `diff`: 10 minute overlapping differences of `log`;
++ `vola`: 10 minute activity ("variance") of `diff`;
++ `div`: trend indicator with *one plus* for a trend, *around one* for no trend and *one minus* for a mean reverting time series;
 + `timestamp`: point in time when the quote has been generated.
 
 Our trading strategy is simple and has only two rules:
 
-1. If there is a strong trend (ratio > 1.75) then either buy Bitcoins for a positive trend or sell them for a negative one. For each trade use only 1/1000 of your current account balance.
+1. If there is a strong trend (ratio > 2.50) then either buy Bitcoins for a positive trend or sell them for a negative one. For each trade use only 1/1000 of your current account balance.
 
 2. If there is a weak or no trend (ratio < 1.25) then sell Bitcoins; again use only 1/1000 of the current account balance per trade.
 
@@ -203,10 +203,10 @@ Since we know now how this particular strategy works, let's analyze it's perform
 Another important point to mention are the *fees*: The above plots and performance returns are the results of a simulation with a fee rate of 20/1000. The overall performance at the end of 30 days is strongly dependent on the fee structure:
 
 ```
-Fee % | .050  .045  .040 .035 .030 .025 .020 .015 0.010 0.005 0.000
-PnL % |-.600 -.400 -.200 .000 .200 .400 .600 .800 1.000 1.200 1.400
+Fee % | 0.500  0.400  0.300  0.200  0.100  0.000
+PnL % |-0.427 -0.190 +0.048 +0.286 +0.525 +0.765
 ```
-Interestingly the 30-day PnL seems to depend *linearly* on the fee. Break even is achieved at a fee rate of 0.35 percent: Bitstamp.net allows you trade depending on your monthly volume as low as 0.22 percent, therefore based on this simple analysis a monthly return of 0.5 percent seems quite reasonable.
+Interestingly the 30-day PnL seems to depend *linearly* on the fee. Break even is achieved somewhere between a fee rate of 0.30 and 0.40 percent: Bitstamp.net allows you trade depending on your monthly volume as low as 0.22 percent, therefore based on this simple analysis a monthly return of 0.25 percent seems quite reasonable.
 
 But of course 30 days of data does not tell us a lot! This analysis could e.g. be enhanced by using Monte Carlo simulations which would create time series which would qualitatively correspond to our price history. For each of these "alternate realities" we'd run our trading strategy and see how its profits/losses change.
 
@@ -225,24 +225,24 @@ The options here are vast, but I focus only on the most obvious ones. First, we'
 The measurement were taken using an optimized chain of tool chains:
 
 ``` sh
-$ cat /tmp/ticks.log | ./py filter -e high low -e bid ask -e volume | ./py map.float -p last -r last | ./py map.log -p last -r last | ./py simulate -a 0.001 | ./py zmq.pub -a 'ipc:///tmp/8888' > /dev/null
+$ cat /tmp/ticks.log | ./py filter -e high low -e bid ask -e volume | ./py map.float -p last | ./py map.log -p last | ./py sim -a 0.001 | ./py zmq.pub -a 'ipc:///tmp/8888' > /dev/null
 ```
 We copied our ticks to the `/tmp` folder to ensure they reside in RAM and we used the `ipc:///tmp/8888` UNIX socket for interprocess communication (instead of TCP); the effect of both of these changes were not measurable though. Then we started the interpolation tool chains
 
 ``` sh
-$ ./py zmq.sub -a 'ipc:///tmp/8888' | ./py interpolate -i 1.200 | ./py reduce.diff -p last -r return -n 500 | ./py reduce.volatility -p return -r volatility -n 500 | ./py alias -m volatility lhs-volatility | ./py zmq.pub -a "ipc:///tmp/7777" > /dev/null
+$ ./py zmq.sub -a 'ipc:///tmp/8888' | ./py interpolate -i 1.200 | ./py reduce.diff -p log -n 500 | ./py reduce.vola -p diff -n 500 | ./py alias -m vola lhs-vola | ./py zmq.pub -a "ipc:///tmp/7777" > /dev/null
 ```
 and
 
 ``` sh
-$ ./py zmq.sub -a 'ipc:///tmp/8888' | ./py interpolate -i 1.000 | ./py reduce.diff -p last -r return -n 600 | ./py reduce.volatility -p return -r volatility -n 600 | ./py alias -m volatility rhs-volatility | ./py zmq.pub -a "ipc:///tmp/9999" > /dev/null
+$ ./py zmq.sub -a 'ipc:///tmp/8888' | ./py interpolate -i 1.000 | ./py reduce.diff -p log -n 600 | ./py reduce.vola -p diff -n 600 | ./py alias -m vola rhs-vola | ./py zmq.pub -a "ipc:///tmp/9999" > /dev/null
 ```
 which again use the IPC protocol instead of TCP; again no measurable changes. But then we used the following tool chain
 
 ``` sh
-./py zmq.sub -a 'ipc:///tmp/7777' -a 'ipc:///tmp/9999' | ./py interleave.div -p lhs-volatility rhs-volatility -r ratio | grep "rhs-volatility" | ./py alias -m rhs-volatility volatility | ./py map.exp -p last -r price | ./py map.now -r now | ./py filter -i timestamp -i now | ./py reduce.diff -p now -r dt -n 2 > /tmp/dt.log
+./py zmq.sub -a 'ipc:///tmp/7777' -a 'ipc:///tmp/9999' | ./py interleave.div -p lhs-vola rhs-vola | grep "rhs-vola" | ./py alias -m rhs-vola vola | ./py map.exp -p log | ./py map.now -r now | ./py filter -i timestamp now | ./py reduce.diff -p now -r dt -n 2 > /tmp/dt.log
 ```
-which combines the former three tool chains into a single one and measures how fast the quote stream is flowing using `map.now` and `reduce.diff`. We omitted `trade.alpha` to investigate how fast the system can process the quote stream just *before* feeding it into the actual trading strategy; plus in all cases we omitted verbose printing.
+which combines the former three tool chains into a single one and measures how fast the quote stream is flowing using `map.now` and `reduce.diff`. We omitted `trade.alpha` (with the required `alias` renames) to investigate how fast the system can process the quote stream just *before* feeding it into the actual trading strategy; plus in all cases we omitted verbose printing.
 
 Chain combination/merging did help to improve performance by pushing the bulk of the measurements below 1ms towards 0.1ms. Our simulation tries to keep an average speed of 1ms, but we observe a range between 0.1ms and 100ms where the apparent average speed still hovers around 1ms.
 
@@ -273,7 +273,7 @@ where
 + `τ` is a time range used here for scaling (between one minute and mutiple weeks); and
 + `z` is an inhomogeneous times series with `z@{n-1}` representing the previous tick.
 
-So `EMA (t@{n})` is then the *wheighted average* of the last EMA and the previous tick. We've used here the *previous point* definiton which relies on the previous tick `z@{n-1}` instead of the next tick `z@{n}`. We will not elaborate on more complex operators based on this EMA, since the process of implementing them within this project is still ongoing.
+So `EMA (t@{n})` is then the *wheighted average* of the last EMA and the previous tick. We've used here the *previous point* definiton which relies on the previous tick `z@{n-1}` instead of the next tick `z@{n}`.
 
 ### Strategy
 ...
