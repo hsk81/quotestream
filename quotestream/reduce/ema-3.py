@@ -19,21 +19,29 @@ class Ema3Callable (object):
 
     def __init__ (self, tau: float) -> None:
 
-        self.tau = tau
-        self.ema = emalib.EmaCallable (tau=tau)
+        self._ema = emalib.EmaCallable (tau=tau)
+        self._tau = tau
 
     def __call__ (self, ts: numpy.array, arr0: numpy.array, *_: [numpy.array],
                   last: list=None) -> numpy.array:
 
-        ema1 = self.ema (ts, arr0, last=[last[0]])
-        ema2 = self.ema (ts, ema1, last=[last[1]])
-        ema3 = self.ema (ts, ema2, last=[last[2]])
+        ema1 = self._ema (ts, arr0, last=[last[0]])
+        ema2 = self._ema (ts, ema1, last=[last[1]])
+        ema3 = self._ema (ts, ema2, last=[last[2]])
 
         return numpy.array ([ema1, ema2, ema3])
 
     def __repr__ (self) -> str:
         return 'μ·EMA (t@{n-1}) + (1-μ)·z@{n-1} | ' \
                'μ := exp ((t@{n-1} - t@{n})/τ)'
+
+    def get_tau (self) -> float:
+        return self._ema.tau
+
+    def set_tau (self, value: float) -> None:
+        self._ema.tau = value
+
+    tau = property (fget=get_tau, fset=set_tau)
 
 ###############################################################################
 ###############################################################################
