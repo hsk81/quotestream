@@ -50,8 +50,8 @@ if __name__ == "__main__":
     parser.description = \
         """
         Calculates the *exponential moving average* EMA directly from an
-        inhomogeneous time series: It requires two parameters where the first
-        is fixed as *timestamp* and the second can be chosen freely.
+        inhomogeneous time series: It requires at least two parameters where
+        the first is fixed as *timestamp* and the rest can be chosen freely.
         """
 
     parser.epilog =\
