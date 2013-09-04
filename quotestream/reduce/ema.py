@@ -17,7 +17,7 @@ import quotestream.reduce.do as do
 class EmaCallable (object):
 
     def __init__ (self, tau: float) -> None:
-        self._tau = tau
+        self.tau = tau
 
     def __call__ (self, ts: numpy.array, *arrays: [numpy.array],
                   last: list=None) -> numpy.array:
@@ -33,14 +33,6 @@ class EmaCallable (object):
         return 'μ·EMA (t@{n-1}) + (1-μ)·z@{n-1} | ' \
                'μ := exp ((t@{n-1} - t@{n})/τ)'
 
-    def get_tau (self) -> float:
-        return self._tau
-
-    def set_tau (self, value: float) -> None:
-        self._tau = value
-
-    tau = property (fget=get_tau, fset=set_tau)
-
 ###############################################################################
 ###############################################################################
 
@@ -51,6 +43,7 @@ if __name__ == "__main__":
         'stack-size': 2,
         'function': ema,
         'parameters': [['timestamp']],
+        'default': [None], ## dummy
         'result': 'ema'
     })
 
@@ -86,6 +79,10 @@ if __name__ == "__main__":
 
     args = do.get_args (parser=parser)
     ema.tau = args.tau
+
+    if isinstance (args.default, list) and len (args.default) > 0:
+        ## filter dummy default since none required for timestamp!
+        args.default = filter (lambda d: d is not None, args.default)
 
     try: do.loop (args.function, args.parameters, args.stack_size,
         args.default, args.result, verbose=args.verbose)
