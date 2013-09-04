@@ -107,7 +107,7 @@ $ ./py zmq.sub | ./py interpolate -i 1.000 | ./py reduce.diff -p log -n 600 | ./
 ```
 For reasons to explained later we *repeat* the previous calculation, but this time our interpolation interval is 1.0 second, and we store the volatility in `rhs-vola`. The following image shows the effect of changing the interpolation interval and calculating the corresponding volatilities:
 
-![Volatility Plot](http://db.tt/Vo7Ls9tp "Logarithms, Returns and Volatilities")
+![Logs, Returns & Volatilies](http://db.tt/UlvQmFKH "Logarithms, Returns and Volatilities")
 
 The plot shows the logarithm, return and volatility for *three* different interpolation interval values: Two of them are similar, but one is quite distinct. The observed effect is an apparent shift relative to each other. This makes sense since the larger the interpolation interval, the fewer the number of homogeneous ticks (since we sample less), and therefore the corresponding curves lag behind the ones with the smaller interpolation intervals.
 
@@ -121,7 +121,7 @@ First with `zmq.sub` we subscribe to *both* streams at `tcp://127.0.0.1:7777` an
 
 The `reduce.div` divides the `lhs-vola` with `rhs-vola` values; since these two volatilities are slightly off from each other (due to different interpolations), we actually end up calculating a **trend indicator**: If the ratio is higher than one we have a positive or negative trend, if it hovers around one there is no trend, and if it is less then one then we should observe a mean reverting behavior. The following figure shows this quite clearly:
 
-![Ratio Plot](http://db.tt/iDQNvyLK "USD Price (B), Log Returns (R), PnL Percent (C), Volatility Ratio (M), BTC & USD Account (M&Y), Volatility (G)")
+![Alpha Strategy](http://db.tt/exsA5Xq0 "USD Price [B], Log Returns [R], PnL Percent [C], Volatility Ratio [M], BTC & USD Account [M&Y], Volatility [G]")
 
 The figure shows a period of about 30 days, and has the following sub-plots charted:
 
@@ -167,11 +167,9 @@ Finally, we print verbosely again the quote stream on the terminal, *and* we sto
 ### Cat, Exponentiate, and Alpha Sim
 
 Now it's time to run a simulation to test and analyze a relatively simple strategy:
-
 ```
 $ cat data/lrv-ratio.log | ./py map.exp -p log | ./py trade.alpha -v > data/alpha.log
 ```
-
 First, we access our stored (and processed) quote stream via the UNIX command `cat` and exponentiate the `last` entry the get the original `price`, which we also need in the decision process of our trading strategy. The input to `trade.alpha` looks then like:
 
 ``` json
@@ -220,27 +218,27 @@ There are three ways to improve this still basic trading system: One is w.r.t. *
 
 The options here are vast, but I focus only on the most obvious ones. First, we'll look at how fast our solution is:
 
-![Time Measurement - IPC/1GQPS](http://db.tt/9OcNjBnm "1 Giga Quotes per Second")
+![Time Measurement - IPC/1GQPS](http://db.tt/PCpyUYHq "Less than 1 Giga Quotes per Second")
 
 The measurement were taken using an optimized chain of tool chains:
 
 ``` sh
-$ cat /tmp/ticks.log | ./py filter -e high low -e bid ask -e volume | ./py map.float -p last | ./py map.log -p last | ./py sim -a 0.001 | ./py zmq.pub -a 'ipc:///tmp/8888' > /dev/null
+$ head -n 8192 /tmp/ticks.log | ./py filter -e high low -e bid ask -e volume | ./py map.float -p last | ./py map.log -p last | ./py sim -a 0.001 | ./py zmq.pub -a 'ipc:///tmp/8888' > /dev/null
 ```
-We copied our ticks to the `/tmp` folder to ensure they reside in RAM and we used the `ipc:///tmp/8888` UNIX socket for interprocess communication (instead of TCP); the effect of both of these changes were not measurable though. Then we started the interpolation tool chains
+We copied our ticks to the `/tmp` folder to ensure they reside in RAM and we used the `ipc:///tmp/8888` UNIX socket for interprocess communication (instead of TCP); the effect of both of these changes were not measurable though. We take measurement only for the first `8192` quotes. Then we started the interpolation tool chains
 
 ``` sh
-$ ./py zmq.sub -a 'ipc:///tmp/8888' | ./py interpolate -i 1.200 | ./py reduce.diff -p log -n 500 | ./py reduce.vola -p diff -n 500 | ./py alias -m vola lhs-vola | ./py zmq.pub -a "ipc:///tmp/7777" > /dev/null
+$ ./py zmq.sub -a 'ipc:///tmp/8888' | ./py interpolate -i 1.200 | ./py reduce.diff -p log -n 500 | ./py reduce.vola -p diff -n 500 | ./py alias -m vola lhs-vola | ./py zmq.push -a "ipc:///tmp/7777" > /dev/null
 ```
 and
 
 ``` sh
-$ ./py zmq.sub -a 'ipc:///tmp/8888' | ./py interpolate -i 1.000 | ./py reduce.diff -p log -n 600 | ./py reduce.vola -p diff -n 600 | ./py alias -m vola rhs-vola | ./py zmq.pub -a "ipc:///tmp/9999" > /dev/null
+$ ./py zmq.sub -a 'ipc:///tmp/8888' | ./py interpolate -i 1.000 | ./py reduce.diff -p log -n 600 | ./py reduce.vola -p diff -n 600 | ./py alias -m vola rhs-vola | ./py zmq.push -a "ipc:///tmp/9999" > /dev/null
 ```
 which again use the IPC protocol instead of TCP; again no measurable changes. But then we used the following tool chain
 
 ``` sh
-./py zmq.sub -a 'ipc:///tmp/7777' -a 'ipc:///tmp/9999' | ./py interleave.div -p lhs-vola rhs-vola | grep "rhs-vola" | ./py alias -m rhs-vola vola | ./py map.exp -p log | ./py map.now -r now | ./py filter -i timestamp now | ./py reduce.diff -p now -r dt -n 2 > /tmp/dt.log
+./py zmq.pull -a 'ipc:///tmp/7777' -a 'ipc:///tmp/9999' | ./py interleave.div -p lhs-vola rhs-vola | grep "rhs-vola" | ./py alias -m rhs-vola vola | ./py map.exp -p log | ./py map.now -r now | ./py filter -i timestamp now | ./py reduce.diff -p now -r dt > /tmp/dt.log
 ```
 which combines the former three tool chains into a single one and measures how fast the quote stream is flowing using `map.now` and `reduce.diff`. We omitted `trade.alpha` (with the required `alias` renames) to investigate how fast the system can process the quote stream just *before* feeding it into the actual trading strategy; plus in all cases we omitted verbose printing.
 
