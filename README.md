@@ -225,32 +225,32 @@ The measurement were taken using an optimized chain of tool chains:
 ``` sh
 $ head -n 8192 /tmp/ticks.log | ./py filter -e high low -e bid ask -e volume | ./py map.float -p last | ./py map.log -p last | ./py sim -a 0.001 | ./py zmq.pub -a 'ipc:///tmp/8888' > /dev/null
 ```
-We copied our ticks to the `/tmp` folder to ensure they reside in RAM and we used the `ipc:///tmp/8888` UNIX socket for interprocess communication (instead of TCP); the effect of both of these changes were not measurable though. We take measurement only for the first `8192` quotes. Then we started the interpolation tool chains
+We copied our ticks to the `/tmp` folder to ensure they reside in RAM and we used the `ipc:///tmp/8888` UNIX socket for interprocess communication (instead of TCP); the effect of both of these changes were not measurable though. We took measurements only for the first `8192` quotes. Then we started the (modified) interpolation tool chains
 
 ``` sh
-$ ./py zmq.sub -a 'ipc:///tmp/8888' | ./py interpolate -i 1.200 | ./py reduce.diff -p log -n 500 | ./py reduce.vola -p diff -n 500 | ./py alias -m vola lhs-vola | ./py zmq.push -a "ipc:///tmp/7777" > /dev/null
+$ ./py zmq.sub -a 'ipc:///tmp/8888' | ./py interpolate -i 5.0 | ./py reduce.diff -p log -n 120 | ./py reduce.vola -p diff -n 120 | ./py alias -m vola lhs-vola | ./py zmq.push -a "ipc:///tmp/7777" > /dev/null
 ```
 and
 
 ``` sh
-$ ./py zmq.sub -a 'ipc:///tmp/8888' | ./py interpolate -i 1.000 | ./py reduce.diff -p log -n 600 | ./py reduce.vola -p diff -n 600 | ./py alias -m vola rhs-vola | ./py zmq.push -a "ipc:///tmp/9999" > /dev/null
+$ ./py zmq.sub -a 'ipc:///tmp/8888' | ./py interpolate -i 6.0 | ./py reduce.diff -p log -n 100 | ./py reduce.vola -p diff -n 100 | ./py alias -m vola rhs-vola | ./py zmq.push -a "ipc:///tmp/9999" > /dev/null
 ```
-which again use the IPC protocol instead of TCP; again no measurable changes. But then we used the following tool chain
+which again use the IPC protocol instead of TCP; by interpolating less (every `5` or `6` seconds) we gained some significant performance. Further, we used the following tool chain
 
 ``` sh
 ./py zmq.pull -a 'ipc:///tmp/7777' -a 'ipc:///tmp/9999' | ./py interleave.div -p lhs-vola rhs-vola | grep "rhs-vola" | ./py alias -m rhs-vola vola | ./py map.exp -p log | ./py map.now -r now | ./py filter -i timestamp now | ./py reduce.diff -p now -r dt > /tmp/dt.log
 ```
 which combines the former three tool chains into a single one and measures how fast the quote stream is flowing using `map.now` and `reduce.diff`. We omitted `trade.alpha` (with the required `alias` renames) to investigate how fast the system can process the quote stream just *before* feeding it into the actual trading strategy; plus in all cases we omitted verbose printing.
 
-Chain combination/merging did help to improve performance by pushing the bulk of the measurements below 1ms towards 0.1ms. Our simulation tries to keep an average speed of 1ms, but we observe a range between 0.1ms and 100ms where the apparent average speed still hovers around 1ms.
+Chain combination/merging did also help to improve performance by pushing the bulk of the measurements below `1`ms towards `0.1`ms. Our simulation tries to keep an average speed of `1`ms, but we observe a range between about `0.1`ms and `200`ms, where the average and median speeds are `6.53`ms and `0.15`ms. The share of speeds larger than `1`ms is `4.5%`.
 
-The odd behavior might have an explanation: Python's garbage collector cleans up in regular intervals un-referenced objects from the memory; this process (or some other) causes these slowdowns to about 100ms; to make up for this lost time the simulator accelerates the quote stream speed to 0.1ms and keeps so the average around the desired 1ms speed.
+This odd behavior might have an explanation: Python's garbage collector cleans up in regular intervals un-referenced objects from the memory; this process (or some other) causes these slowdowns to about `200`ms; to make up for this lost time the simulator accelerates the quote stream speed to about `0.1`ms and tries so to keep the average around the target speed of `1`ms. It fails in doing so because offsetting the median to `0.15`ms is not enough to bring down the average as much as desired.
 
-Obviously this behavior is very much to be avoided, and we'd like to keep as many measurements as possible tightly around 1ms (jitter reduction). This can probably be fixed by investigating Python's garbage collector, the processes running on the system during the simulation and/or the underlying [ZeroMQ](http://zeromq.org) transport layer.
+Obviously this behavior is very much to be avoided, and we'd like to keep as many measurements as possible tightly around `1`ms (jitter reduction). This can probably be fixed by investigating Python's garbage collector, the processes running on the system during the simulation and/or the underlying [ZeroMQ](http://zeromq.org) transport layer.
 
-These measurements show one fact very clearly though: If required the system has very much the capacity to run at a quote stream speed of 0.1ms! Since the exchange itself delivers the quotes every 1-10 seconds, the current performance is more than enough for our purposes. 
+These measurements show one fact very clearly though: If required the system has very much the capacity to run at a quote stream speed of `0.15`ms! Since the exchange itself delivers the quotes every `1-10` seconds, the current performance is more than enough for our purposes.
 
-We could use another Python interpreter, e.g. [PyPy](http://pypy.org) which promises faster execution times. Further, rewriting and combining various tools within the different chains is another option (although it would be contrary to the *one tool for one task* approach). The quote stream uses JSON, which has longer parsing times compared to simpler position based message protocols; it is possible to replace it but we'd loose the great flexibility it offers compared to the others. Increasing the number of CPU cores might also have an effect, although during the simulation the available four cores were not used 100%; other possibilities might be to increase CPU cache or to use faster RAM.
+We could use another Python interpreter, e.g. [PyPy](http://pypy.org) which promises faster execution times. Further, rewriting and combining various tools within the different chains is another option (although it would be contrary to the *one tool for one task* approach). The quote stream uses JSON, which has longer parsing times compared to simpler position based message protocols; it is possible to replace it but we'd loose the great flexibility it offers compared to the others. Increasing the number of CPU cores might also have an effect, although during the simulation the available four cores were not used `100%`; other possibilities might be to increase CPU cache or to use faster RAM.
 
 ### Mathematics
 
