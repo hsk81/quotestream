@@ -21,14 +21,18 @@ class VolatilityCallable (object):
         self.scale = scale
         self.exponent = p
 
-    def __call__ (self, values: numpy.array, last=None) -> numpy.array:
+    def __call__ (self, *arrays: numpy.array, last=None) -> numpy.array:
 
-        absolutes = numpy.absolute (values)
-        powers = numpy.power (absolutes, self.exponent)
-        average = numpy.average (powers, axis=0)
-        power = numpy.power (average, 1.0 / self.exponent)
+        def vola (arr: numpy.array) -> float:
 
-        return power * self.scale
+            absolutes = numpy.absolute (arr)
+            powers = numpy.power (absolutes, self.exponent)
+            average = numpy.average (powers, axis=0)
+            power = numpy.power (average, 1.0 / self.exponent)
+
+            return power * self.scale
+
+        return numpy.array ([vola (arr) for arr in arrays])
 
     def __repr__ (self):
 
@@ -38,10 +42,10 @@ class VolatilityCallable (object):
 ###############################################################################
 
 if __name__ == "__main__":
-    volatility = VolatilityCallable (scale=1.0)
+    vola = VolatilityCallable (scale=1.0)
 
     parser = do.get_args_parser ({
-        'stack-size': 2, 'function': volatility, 'result': 'vola'
+        'stack-size': 2, 'function': vola, 'result': 'vola'
     })
 
     ##
@@ -86,7 +90,7 @@ if __name__ == "__main__":
 
     args = do.get_args (parser=parser)
 
-    volatility.exponent, volatility.scale = args.exponent, \
+    vola.exponent, vola.scale = args.exponent, \
         numpy.sqrt (numpy.array (args.interval_scaled) / args.stack_size) \
             if args.scale is None else args.scale ## override `interval-scaled`
 

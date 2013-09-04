@@ -32,7 +32,7 @@ if __name__ == "__main__":
     diff = DiffCallable (n=2)
 
     parser = do.get_args_parser ({
-        'stack-size': diff.n, 'function': diff, 'default': [], 'result': 'diff'
+        'stack-size': diff.n, 'function': diff, 'result': 'diff'
     })
 
     parser.description = \
@@ -64,10 +64,6 @@ if __name__ == "__main__":
 
     args = do.get_args (parser=parser)
     diff.n = args.stack_size
-
-    if isinstance (args.default, list):
-        dsz = len (args.parameters) - len (args.default)
-        for _ in range (dsz): args.default.append (0.0)
 
     try: do.loop (args.function, args.parameters, args.stack_size,
         args.default, args.result, verbose=args.verbose)

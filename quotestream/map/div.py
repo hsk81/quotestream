@@ -23,10 +23,10 @@ class DivCallable (object):
         result = numpy.divide (*args)
 
         if numpy.isposinf (result) or numpy.isneginf (result) or \
-                numpy.isnan (result):
+           numpy.isnan (result):
 
             result = numpy.array (eval (self.default)
-            if type (self.default) is str else self.default)
+                if type (self.default) is str else self.default)
 
         return result
 

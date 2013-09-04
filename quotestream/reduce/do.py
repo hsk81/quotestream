@@ -62,7 +62,7 @@ def get_args_parser (defaults: dict=frozenset ({})) -> argparse.ArgumentParser:
         default=defaults['stack-size'] if 'stack-size' in defaults else 1,
         help='size of stack of recent values (default: %(default)s)')
     parser.add_argument ('-d', '--default',
-        default=defaults['default'] if 'default' in defaults else [0.0],
+        default=defaults['default'] if 'default' in defaults else [],
         help='reduction base (default: %(default)s)')
     parser.add_argument ('-r', '--result',
         default=defaults['result'] if 'result' in defaults else 'result',
@@ -72,6 +72,11 @@ def get_args_parser (defaults: dict=frozenset ({})) -> argparse.ArgumentParser:
 
 def normalize (args: argparse.Namespace) -> argparse.Namespace:
     args.parameters = reduce (lambda a, b: a + b, args.parameters, [])
+
+    if isinstance (args.default, list):
+        dsz = len (args.parameters) - len (args.default)
+        for _ in range (dsz): args.default.append (0.0)
+
     return args
 
 ###############################################################################

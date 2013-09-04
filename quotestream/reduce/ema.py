@@ -51,7 +51,6 @@ if __name__ == "__main__":
         'stack-size': 2,
         'function': ema,
         'parameters': [['timestamp']],
-        'default': [],
         'result': 'ema'
     })
 
@@ -87,10 +86,6 @@ if __name__ == "__main__":
 
     args = do.get_args (parser=parser)
     ema.tau = args.tau
-
-    if isinstance (args.default, list):
-        dsz = len (args.parameters) - len (args.default)
-        for _ in range (dsz): args.default.append (0.0)
 
     try: do.loop (args.function, args.parameters, args.stack_size,
         args.default, args.result, verbose=args.verbose)
