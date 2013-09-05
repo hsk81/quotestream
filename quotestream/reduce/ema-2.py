@@ -31,8 +31,7 @@ class Ema2Callable (object):
         return numpy.array ([ema1, ema2])
 
     def __repr__ (self) -> str:
-        return 'μ·EMA (t@{n-1}) + (1-μ)·z@{n-1} | ' \
-               'μ := exp ((t@{n-1} - t@{n})/τ)'
+        return 'EMA[τ;EMA[τ,n=1;@{0}]] | EMA[τ,n=1;@{0}] := EMA[τ;@{0}]'
 
     def get_tau (self) -> float:
         return self._ema.tau
