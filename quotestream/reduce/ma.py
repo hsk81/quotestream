@@ -77,10 +77,17 @@ if __name__ == "__main__":
 
     parser.description = \
         """
+        Calculates the *n-th* MA directly from an inhomogeneous time series:
+        It requires two parameters where the first is fixed as `timestamp` and
+        the second can be chosen freely.
         """
 
     parser.epilog =\
         """
+        Delivers results for the *first* to *n-th* EMA operators, **plus** the
+        MA as the last element: This is a necessity since each EMA-i operator
+        needs to access the results of the previous EMA calculations, and since
+        MA requires access to each EMA-i!
         """
 
     parser.add_argument ("-t", "--tau", default=ma.tau,
