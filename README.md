@@ -107,7 +107,7 @@ $ ./py zmq.sub | ./py interpolate -i 1.000 | ./py reduce.diff -p log -n 600 | ./
 ```
 For reasons to explained later we *repeat* the previous calculation, but this time our interpolation interval is 1.0 second, and we store the volatility in `rhs-vola`. The following image shows the effect of changing the interpolation interval and calculating the corresponding volatilities:
 
-![Logs, Returns & Volatilies](http://db.tt/UlvQmFKH "Logarithms, Returns and Volatilities")
+![Logs, Returns & Volatilies](./readme/lrv-111.png "Logarithms, Returns and Volatilities")
 
 The plot shows the logarithm, return and volatility for *three* different interpolation interval values: Two of them are similar, but one is quite distinct. The observed effect is an apparent shift relative to each other. This makes sense since the larger the interpolation interval, the fewer the number of homogeneous ticks (since we sample less), and therefore the corresponding curves lag behind the ones with the smaller interpolation intervals.
 
@@ -121,7 +121,7 @@ First with `zmq.sub` we subscribe to *both* streams at `tcp://127.0.0.1:7777` an
 
 The `reduce.div` divides the `lhs-vola` with `rhs-vola` values; since these two volatilities are slightly off from each other (due to different interpolations), we actually end up calculating a **trend indicator**: If the ratio is higher than one we have a positive or negative trend, if it hovers around one there is no trend, and if it is less then one then we should observe a mean reverting behavior. The following figure shows this quite clearly:
 
-![Alpha Strategy](http://db.tt/exsA5Xq0 "USD Price [B], Log Returns [R], PnL Percent [C], Volatility Ratio [M], BTC & USD Account [M&Y], Volatility [G]")
+![Alpha Strategy](./readme/pnl-alpha[ratio=1.75|1.25].[fee=20].png "USD Price [B], Log Returns [R], PnL Percent [C], Volatility Ratio [M], BTC & USD Account [M&Y], Volatility [G]")
 
 The figure shows a period of about 30 days, and has the following sub-plots charted:
 
@@ -218,7 +218,7 @@ There are three ways to improve this still basic trading system: One is w.r.t. *
 
 The options here are vast, but I focus only on the most obvious ones. First, we'll look at how fast our solution is:
 
-![Time Measurement - IPC/1GQPS](http://db.tt/PCpyUYHq "Less than 1 Giga Quotes per Second")
+![Time Measurement - IPC/1GQPS](./readme/diff-t.e3.ipc.png "Less than 1 Giga Quotes per Second")
 
 The measurement were taken using an optimized chain of tool chains:
 
