@@ -53,7 +53,7 @@ optional arguments:
   -h, --help            show this help message and exit
   -v, --verbose         verbose logging (default: False)
   -i INTERVAL, --interval INTERVAL
-                        seconds between polls (default: 1.25 [s])
+                        seconds between polls (default: 1.000 [s])
   -u URL, --url URL     API (default: https://www.bitstamp.net/api/ticker/)
 ```
 

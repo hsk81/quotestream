@@ -34,7 +34,7 @@ def get_arguments() -> argparse.Namespace:
         default=False, action='store_true',
         help='verbose logging(default: %(default)s)')
     parser.add_argument('-i', '--interval',
-        default=1.250, type=float,
+        default=1.000, type=float,
         help='seconds between polls(default: %(default)s [s])')
     parser.add_argument('-u', '--url',
         default='https://www.bitstamp.net/api/ticker/',
