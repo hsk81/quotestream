@@ -35,9 +35,9 @@ Let's start with the most basic operation: Asking the exchange for quotes and re
 ``` sh
 $ ./py ticker -v > log/ticks.log
 ```
-This tool polls the exchange's ticker URL almost every second and stores the reported quotes in `log/ticks.log`; plus thanks to the `-v` (--verbose) switch the quotes are also printed on the terminal.
+This tool polls the exchange's ticker URL almost every second and stores the reported quotes in `log/ticks.log`; plus thanks to the `-v` (`--verbose`) switch the quotes are also printed on the terminal.
 
-Each tool should have a `-h` (--help) switch, printing a short description what it's supposed to do and showing other optional or mandatory arguments. In the ideal case a tool should have optional arguments only, read from the standard input and write to the standard output.
+Each tool should have a `-h` (`--help`) switch, printing a short description what it's supposed to do and showing other optional or mandatory arguments. In the ideal case a tool should have optional arguments only, read from the standard input and write to the standard output.
 
 Although not always possible following this philosophy allows for a quick and simple "plumbing" of different tools together in a chain. Mandatory options can in the most cases avoided by using reasonable defaults, for example:
 ``` sh
@@ -69,7 +69,7 @@ The `simulate` tool ensures that the quote stream flows with a 1000 fold *accele
 
 Finally, with `zmq.pub` the stream is published on the default TCP port `tcp://*:8888`, where it can be subscribed to from a different terminal or even from a different machine (in the same network). With the help of this publisher we can fork a quote stream, and apply different tool chains to each sub-stream.
 
-Since the quotes are now published, we suppress the standard output by wiring it to `/dev/null`. But we still would like to see that the stream is flowing and have therefore the `-v` (--verbose) switch activated. In contrast to the standard output the quotes' timestamps are formatted properly if we use the verbose switch; the actual publication keeps the UNIX timestamp format though!
+Since the quotes are now published, we suppress the standard output by wiring it to `/dev/null`. But we still would like to see that the stream is flowing and have therefore the `-v` (`--verbose`) switch activated. In contrast to the standard output the quotes' timestamps are formatted properly if we use the verbose switch; the actual publication keeps the UNIX timestamp format though!
 
 As a summary, quotes provided to the tool chain as input look like this:
 ``` json
@@ -151,7 +151,7 @@ It might be a little confusing why we did not use the `filter` tool to exclude `
 ...
 ```
 
-As you can see the `lhs-vola` and `rhs-vola` quote stream are not really merged, but simply *interleaved*! Therefore just excluding `lhs-vola would be the wrong approach, since then we'd end up with some quotes which don't have *any* volatility information left; that's why we have to completely remove on sub-stream and continue with the remaining one.
+As you can see the `lhs-vola` and `rhs-vola` quote stream are not really merged, but simply *interleaved*! Therefore just excluding `lhs-vola` would be the wrong approach, since then we'd end up with some quotes which don't have *any* volatility information left; that's why we have to completely remove on sub-stream and continue with the remaining one.
 
 Well, after the application of the tool chain we get:
 
