@@ -3,27 +3,26 @@
 ###############################################################################
 ###############################################################################
 
-from distutils.core import setup
+from setuptools import setup
 
 ###############################################################################
 ###############################################################################
 
 setup(
     name='quotestream',
-    version='0.0.2',
+    version='0.0.3',
     license='GPLv3',
     author='Hasan Karahan',
-    author_email='hasan.karahan81@gmail.com',
-    url='https://bitbucket.org/hsk81/quotestream',
-    description='Algorithmic Trading with Quote Stream',
-
-    requires=[
-        'ipython>=1.0.0',
-        'numpy>=1.7.1',
-        'python-dateutil>=2.1',
-        'pyzmq>=13.1.0',
-        'requests>=1.2.3',
-        'ujson>=1.33',
+    author_email='hasan.karahan@blackhan.com',
+    url='https://github.com/hsk81/quotestream',
+    description='Algorithmic Trading with Quotestream',
+    install_requires=[
+        'ipython>=7.22.0',
+        'numpy>=1.20.2',
+        'python-dateutil>=2.8.1',
+        'pyzmq>=22.0.3',
+        'requests>=2.25.1',
+        'ujson>=4.0.2',
     ]
 )
 
