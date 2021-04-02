@@ -17,7 +17,7 @@ import quotestream.map.do as do
 class FloatCallable(object):
 
     def __call__(self, *args: [numpy.array], last=None) -> numpy.array:
-        return numpy.array(args).astype(numpy.float)
+        return numpy.array(args).astype(float)
 
     def __repr__(self) -> str:
         return 'array(@{0}).astype(float)'
