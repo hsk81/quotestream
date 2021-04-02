@@ -14,21 +14,21 @@ import quotestream.map.do as do
 ###############################################################################
 ###############################################################################
 
-class LogCallable (object):
+class LogCallable(object):
 
-    def __call__ (self, *args: [numpy.array], last=None) -> numpy.array:
-        return 1.0 / numpy.array (args)
+    def __call__(self, *args: [numpy.array], last=None) -> numpy.array:
+        return 1.0 / numpy.array(args)
 
-    def __repr__ (self) -> str:
-        return 'log (@{0})'
+    def __repr__(self) -> str:
+        return 'log(@{0})'
 
 ###############################################################################
 ###############################################################################
 
 if __name__ == "__main__":
 
-    parser = do.get_args_parser ({
-        'function': LogCallable (), 'result': 'inv'
+    parser = do.get_args_parser({
+        'function': LogCallable(), 'result': 'inv'
     })
 
     parser.description = \
@@ -39,9 +39,9 @@ if __name__ == "__main__":
         """
         """
 
-    args = do.get_args (parser=parser)
+    args = do.get_args(parser=parser)
 
-    try: do.loop (args.function, args.parameters, args.stack_size,
+    try: do.loop(args.function, args.parameters, args.stack_size,
         args.default, args.result, verbose=args.verbose)
 
     except KeyboardInterrupt:

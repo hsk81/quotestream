@@ -14,21 +14,21 @@ import quotestream.interleave.do as do
 ###############################################################################
 ###############################################################################
 
-class SumCallable (object):
+class SumCallable(object):
 
-    def __call__ (self, *args: [numpy.array], last=None) -> numpy.array:
-        return numpy.sum (numpy.array (args).flatten ())
+    def __call__(self, *args: [numpy.array], last=None) -> numpy.array:
+        return numpy.sum(numpy.array(args).flatten())
 
-    def __repr__ (self) -> str:
-        return 'sum (@{0})'
+    def __repr__(self) -> str:
+        return 'sum(@{0})'
 
 ###############################################################################
 ###############################################################################
 
 if __name__ == "__main__":
 
-    parser = do.get_args_parser ({
-        'function': SumCallable (), 'result': 'sum'
+    parser = do.get_args_parser({
+        'function': SumCallable(), 'result': 'sum'
     })
 
     parser.description = \
@@ -39,9 +39,9 @@ if __name__ == "__main__":
         """
         """
 
-    args = do.get_args (parser=parser)
+    args = do.get_args(parser=parser)
 
-    try: do.loop (args.function, args.parameters, args.default, args.result,
+    try: do.loop(args.function, args.parameters, args.default, args.result,
         verbose=args.verbose)
 
     except KeyboardInterrupt:

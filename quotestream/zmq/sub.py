@@ -20,9 +20,9 @@ from quotestream.util import attach
 ###############################################################################
 ###############################################################################
 
-def get_arguments () -> argparse.Namespace:
+def get_arguments() -> argparse.Namespace:
 
-    parser = argparse.ArgumentParser (description=
+    parser = argparse.ArgumentParser(description=
         """
         Subscribes to a quote stream at an address. The following two protocols
         are supported: TCP and IPC.
@@ -38,43 +38,43 @@ def get_arguments () -> argparse.Namespace:
         be a path to the UNIX socket of the publisher.
         """)
 
-    parser.add_argument ("-v", "--verbose",
+    parser.add_argument("-v", "--verbose",
         default=False, action="store_true",
-        help="verbose logging (default: %(default)s)")
-    parser.add_argument ('-a', '--sub-address',
+        help="verbose logging(default: %(default)s)")
+    parser.add_argument('-a', '--sub-address',
         default=[['tcp://127.0.0.1:8888']], action=attach, nargs='+',
-        help='subscription address (default: %(default)s)')
+        help='subscription address(default: %(default)s)')
 
-    return parser.parse_args ()
+    return parser.parse_args()
 
 ###############################################################################
 ###############################################################################
 
-def loop (context: zmq.Context, addresses: list, verbose: bool=False) -> None:
+def loop(context: zmq.Context, addresses: list, verbose: bool=False) -> None:
 
-    socket = context.socket (zmq.SUB)
-    for address in addresses: socket.connect (address)
+    socket = context.socket(zmq.SUB)
+    for address in addresses: socket.connect(address)
     socket.LINGER = 0
 
-    socket.setsockopt_string (zmq.SUBSCRIBE, '')
-    line = socket.recv_string ()
+    socket.setsockopt_string(zmq.SUBSCRIBE, '')
+    line = socket.recv_string()
 
     while line != '\0':
-        tick = JSON.decode (line.replace ("'", '"'))
+        tick = JSON.decode(line.replace("'", '"'))
 
         if verbose:
-            now = datetime.fromtimestamp (tick['timestamp'])
-            print ('[%s] %s' % (now, tick), file=sys.stderr)
+            now = datetime.fromtimestamp(tick['timestamp'])
+            print('[%s] %s' %(now, tick), file=sys.stderr)
 
-        print (tick, file=sys.stdout); sys.stdout.flush ()
-        line = socket.recv_string ()
+        print(tick, file=sys.stdout); sys.stdout.flush()
+        line = socket.recv_string()
 
 ###############################################################################
 ###############################################################################
 
-def normalize (args: argparse.Namespace) -> argparse.Namespace:
+def normalize(args: argparse.Namespace) -> argparse.Namespace:
 
-    args.sub_address = list (reduce (lambda a, b: a + b, args.sub_address, []))
+    args.sub_address = list(reduce(lambda a, b: a + b, args.sub_address, []))
     return args
 
 ###############################################################################
@@ -82,11 +82,11 @@ def normalize (args: argparse.Namespace) -> argparse.Namespace:
 
 if __name__ == "__main__":
 
-    args = normalize (get_arguments ())
-    context = zmq.Context (1)
+    args = normalize(get_arguments())
+    context = zmq.Context(1)
 
     try:
-        loop (context, args.sub_address, verbose=args.verbose)
+        loop(context, args.sub_address, verbose=args.verbose)
     except KeyboardInterrupt:
         pass
 

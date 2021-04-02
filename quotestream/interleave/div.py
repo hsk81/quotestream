@@ -14,32 +14,32 @@ import quotestream.interleave.do as do
 ###############################################################################
 ###############################################################################
 
-class DivCallable (object):
+class DivCallable(object):
 
-    def __init__ (self, default):
+    def __init__(self, default):
         self.default = default
 
-    def __call__ (self, *args: [numpy.array], last=None) -> numpy.array:
-        result = numpy.divide (*args)
+    def __call__(self, *args: [numpy.array], last=None) -> numpy.array:
+        result = numpy.divide(*args)
 
-        if numpy.isposinf (result) or numpy.isneginf (result) or \
-           numpy.isnan (result):
+        if numpy.isposinf(result) or numpy.isneginf(result) or \
+           numpy.isnan(result):
 
-            result = numpy.array (eval (self.default)
-                if type (self.default) is str else self.default)
+            result = numpy.array(eval(self.default)
+                if type(self.default) is str else self.default)
 
         return result
 
-    def __repr__ (self) -> str:
-        return 'divide (@{0})'
+    def __repr__(self) -> str:
+        return 'divide(@{0})'
 
 ###############################################################################
 ###############################################################################
 
 if __name__ == "__main__":
-    div = DivCallable (default=[1.0])
+    div = DivCallable(default=[1.0])
 
-    parser = do.get_args_parser ({
+    parser = do.get_args_parser({
         'function': div, 'default': div.default, 'result': 'div'
     })
 
@@ -51,10 +51,10 @@ if __name__ == "__main__":
         """
         """
 
-    args = do.get_args (parser=parser)
+    args = do.get_args(parser=parser)
     div.default = args.default
 
-    try: do.loop (args.function, args.parameters, args.default, args.result,
+    try: do.loop(args.function, args.parameters, args.default, args.result,
         verbose=args.verbose)
 
     except KeyboardInterrupt:

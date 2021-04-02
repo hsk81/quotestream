@@ -11,14 +11,14 @@ import argparse
 ###############################################################################
 ###############################################################################
 
-class attach (argparse.Action):
-    """Appends values by *overwriting* initial defaults (if any)"""
+class attach(argparse.Action):
+    """Appends values by *overwriting* initial defaults(if any)"""
     def __call__(self, parser, namespace, values, option_string=None):
-        items = getattr (namespace, self.dest, [])
+        items = getattr(namespace, self.dest, [])
         if items == self.default:
-            setattr (namespace, self.dest, [values])
+            setattr(namespace, self.dest, [values])
         else:
-            setattr (namespace, self.dest, list (items) + [values])
+            setattr(namespace, self.dest, list(items) + [values])
 
 ###############################################################################
 ###############################################################################

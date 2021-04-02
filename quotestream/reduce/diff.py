@@ -14,24 +14,24 @@ import quotestream.reduce.do as do
 ###############################################################################
 ###############################################################################
 
-class DiffCallable (object):
+class DiffCallable(object):
 
-    def __init__ (self, n: int) -> None:
+    def __init__(self, n: int) -> None:
         self.n = n
 
-    def __call__ (self, *arrays: [numpy.array], last=None) -> numpy.array:
-        return numpy.array ([arr[0] - arr[self.n - 1] for arr in arrays])
+    def __call__(self, *arrays: [numpy.array], last=None) -> numpy.array:
+        return numpy.array([arr[0] - arr[self.n - 1] for arr in arrays])
 
-    def __repr__ (self):
+    def __repr__(self):
         return '@{0} - @{n-1}'
 
 ###############################################################################
 ###############################################################################
 
 if __name__ == "__main__":
-    diff = DiffCallable (n=2)
+    diff = DiffCallable(n=2)
 
-    parser = do.get_args_parser ({
+    parser = do.get_args_parser({
         'stack-size': diff.n, 'function': diff, 'result': 'diff'
     })
 
@@ -45,12 +45,12 @@ if __name__ == "__main__":
     parser.epilog = \
         """
         The difference is in general used to calculate a *return* at time
-        t@{i}, r (t@{i}), and is defined as r (t@{i}) := r (Δt; t@{i}) =
-        x (t@{i}) - x (t@{i}-Δt) where x (t@{i}) is a *homogeneous* sequence of
+        t@{i}, r(t@{i}), and is defined as r(t@{i}) := r(Δt; t@{i}) =
+        x(t@{i}) - x(t@{i}-Δt) where x(t@{i}) is a *homogeneous* sequence of
         logarithmic prices, and Δt is a time interval of fixed size.
 
         In the normal case, Δt is the interval of the homogeneous series, and
-        r (t@{i}) is the series of the first differences of x (t@{i}). If the
+        r(t@{i}) is the series of the first differences of x(t@{i}). If the
         return is chosen to be a multiple of the series interval, the obtained
         intervals are *overlapping*.
 
@@ -62,10 +62,10 @@ if __name__ == "__main__":
         process is not.
         """
 
-    args = do.get_args (parser=parser)
+    args = do.get_args(parser=parser)
     diff.n = args.stack_size
 
-    try: do.loop (args.function, args.parameters, args.stack_size,
+    try: do.loop(args.function, args.parameters, args.stack_size,
         args.default, args.result, verbose=args.verbose)
 
     except KeyboardInterrupt:

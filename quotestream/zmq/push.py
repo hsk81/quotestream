@@ -18,9 +18,9 @@ from datetime import datetime
 ###############################################################################
 ###############################################################################
 
-def get_arguments () -> argparse.Namespace:
+def get_arguments() -> argparse.Namespace:
 
-    parser = argparse.ArgumentParser (description=
+    parser = argparse.ArgumentParser(description=
         """
         Pushes a quote stream at an address. The following two protocols are
         available: TCP and IPC.
@@ -36,47 +36,47 @@ def get_arguments () -> argparse.Namespace:
         any arbitrary path to a UNIX socket.
         """)
 
-    parser.add_argument ("-v", "--verbose",
+    parser.add_argument("-v", "--verbose",
         default=False, action="store_true",
-        help="verbose logging (default: %(default)s)")
-    parser.add_argument ('-a', '--to-address',
+        help="verbose logging(default: %(default)s)")
+    parser.add_argument('-a', '--to-address',
         default='tcp://*:8888',
-        help='publication address (default: %(default)s)')
+        help='publication address(default: %(default)s)')
 
-    return parser.parse_args ()
+    return parser.parse_args()
 
 ###############################################################################
 ###############################################################################
 
-def loop (context: zmq.Context, address: str, verbose: bool=False) -> None:
+def loop(context: zmq.Context, address: str, verbose: bool=False) -> None:
 
-    socket = context.socket (zmq.PUSH)
-    socket.bind (address)
+    socket = context.socket(zmq.PUSH)
+    socket.bind(address)
     socket.LINGER = 0
 
     try:
         for line in sys.stdin:
-            tick = JSON.decode (line.replace ("'", '"'))
+            tick = JSON.decode(line.replace("'", '"'))
 
             if verbose:
-                now = datetime.fromtimestamp (tick['timestamp'])
-                print ('[%s] %s' % (now, tick), file=sys.stderr)
+                now = datetime.fromtimestamp(tick['timestamp'])
+                print('[%s] %s' %(now, tick), file=sys.stderr)
 
-            print (tick, file=sys.stdout); sys.stdout.flush ()
-            socket.send_string (line)
+            print(tick, file=sys.stdout); sys.stdout.flush()
+            socket.send_string(line)
     finally:
-        socket.send_string ('\0')
+        socket.send_string('\0')
 
 ###############################################################################
 ###############################################################################
 
 if __name__ == "__main__":
 
-    args = get_arguments ()
-    context = zmq.Context (1)
+    args = get_arguments()
+    context = zmq.Context(1)
 
     try:
-        loop (context, args.to_address, verbose=args.verbose)
+        loop(context, args.to_address, verbose=args.verbose)
     except KeyboardInterrupt:
         pass
 

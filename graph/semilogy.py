@@ -19,17 +19,17 @@ import pylab
 
 if __name__ == "__main__":
 
-    args = get_arguments (get_defaults ())
+    args = get_arguments(get_defaults())
 
     try:
-        loop (args.parameter_group,
-              args.colors,
-              args.widths,
-              args.markers,
-              args.ncols,
-              plotter=pylab.semilogy,
-              hold=args.keep,
-              verbose=args.verbose)
+        loop(args.parameter_group,
+             args.colors,
+             args.widths,
+             args.markers,
+             args.ncols,
+             plotter=pylab.semilogy,
+             hold=args.keep,
+             verbose=args.verbose)
 
     except KeyboardInterrupt:
         pass
