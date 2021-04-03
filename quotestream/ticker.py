@@ -36,8 +36,11 @@ def get_arguments() -> argparse.Namespace:
     parser.add_argument('-i', '--interval',
         default=1.000, type=float,
         help='seconds between polls(default: %(default)s [s])')
+    parser.add_argument('-c', '--currency-pair',
+        default='btcusd', type=str,
+        help='currency pair(default: %(default)s)')
     parser.add_argument('-u', '--url',
-        default='https://www.bitstamp.net/api/ticker/',
+        default='https://www.bitstamp.net/api/v2/ticker/{0}/',
         help='JSON API(default: %(default)s)')
 
     return parser.parse_args()
@@ -55,10 +58,15 @@ def next_response(url: str) -> req.Response:
         print(ex, file=sys.stderr)
         syslog.syslog(syslog.LOG_ERR, str(ex))
 
-def loop(interval: float, url: str, verbose: bool=False) -> None:
+def loop(
+    interval: float, url: str, currency_pair: str, verbose: bool=False
+) -> None:
 
     t0 = time.time()
     last_response = None
+
+    try: url = url.format(currency_pair)
+    except: pass
 
     while True:
         curr_response = next_response(url)
@@ -85,7 +93,7 @@ def loop(interval: float, url: str, verbose: bool=False) -> None:
 if __name__ == "__main__":
 
     args = get_arguments()
-    try: loop(args.interval, args.url, verbose=args.verbose)
+    try: loop(**vars(args))
     except KeyboardInterrupt: pass
 
 ###############################################################################
