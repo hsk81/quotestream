@@ -6,26 +6,38 @@ The basic idea of the system is to model the trading quotes as a stream/pipe of 
 
 This approach has been loosely inspired by the UNIX approach, where the whole system is simply a collection of simple commands that do their job well. A crucial difference is though the fact the UNIX commands work in general on a hierarchical file system as a source and/or target of data, whereas here the quote stream is used as a carrier of data instead.
 
+## Installation
+
+```sh
+$ ./setup.sh && source ./bin/activate
+```
+
+```sh
+[qs] $ ./setup.py install
+```
+
 ## Quote Structure
 
 The actual data in the stream is JSON-like, and some example quotations might look like the following:
 ``` json
-{"volume": "10482.13511879", "last": "117.80", "timestamp": 1368230343.756902, "bid": "117.15", "high": "119.98", "low": "109.20", "ask": "117.90"}
-{"volume": "10482.48787536", "last": "117.90", "timestamp": 1368230351.260416, "bid": "117.90", "high": "119.98", "low": "109.20", "ask": "117.95"}
-{"volume": "10479.48787536", "last": "117.90", "timestamp": 1368230353.784478, "bid": "117.90", "high": "119.98", "low": "109.20", "ask": "117.95"}
+{"volume": "10482.13511879", "last": "117.80", "timestamp": 1368230343.756902, "bid": "117.15", "vwap": "117.52", "high": "119.98", "low": "109.20", "ask": "117.90", "open": "117.90"}
+{"volume": "10482.48787536", "last": "117.90", "timestamp": 1368230351.260416, "bid": "117.90", "vwap": "117.92", "high": "119.98", "low": "109.20", "ask": "117.95", "open": "117.90"}
+{"volume": "10479.48787536", "last": "117.90", "timestamp": 1368230353.784478, "bid": "117.90", "vwap": "117.93", "high": "119.98", "low": "109.20", "ask": "117.95", "open": "117.90"}
 ...
 ```
 According to the official JSON specification the double quote delimiters `"` are mandatory, but each tool in the processing chain also accepts entries where single quote delimiters `'` are used. More importantly each of them *produces* tuples with single quote delimiters (due to some implementation details).
 
 The structure of the tuple is arbitrary, except for `timestamp` which is always required. The `volume`, `high` and `low` values are for the last 24 hours; `last`, `bid` and `ask` contain the most recent values.
 
-+ `last`: USD value paid for a Bitcoin in the most recent transactions;
-+ `bid`: highest bid price in USD somebody is currently willing pay for a BTC;
-+ `ask`: lowest ask prices in USD for which somebody is willing to sell a BTC at;
-+ `high`: highest transaction price in USD in the last 24 hours;
-+ `low`: lowest transaction price in USD in the last 24 hours;
-+ `volume`: number of BTCs traded in the last 24 hours;
-+ `timestamp`: UNIX timestamp for current quote;
++ `last`: last BTC price;
++ `high`: last 24 hours price high;
++ `low`: last 24 hours price low;
++ `vwap`: last 24 hours volume weighted average price.;
++ `volume`: last 24 hours volume;
++ `bid`: highest buy order;
++ `ask`: lowest sell order.;
++ `timestamp`: Unix timestamp date and time;
++ `open`: first price of the day.
 
 This composition is true for the initial, unprocessed quote stream: Except for `timestamp` each component can be removed or transformed; also new ones can be calculated and added to the quotes in the stream. In theory it is possible to remove the `timestamp`, but since most of the tools assume its presence it should not be.
 
@@ -73,7 +85,7 @@ Since the quotes are now published, we suppress the standard output by wiring it
 
 As a summary, quotes provided to the tool chain as input look like this:
 ``` json
-{"volume": "10482.13511879", "last": "117.80", "timestamp": 1368230343.756902, "bid": "117.15", "high": "119.98", "low": "109.20", "ask": "117.90"}
+{"volume": "10482.13511879", "last": "117.80", "timestamp": 1368230343.756902, "bid": "117.15", "vwap": "117.52", "high": "119.98", "low": "109.20", "ask": "117.90", "open": "117.90"}
 ```
 The published output on the TCP port looks like this:
 ``` json
@@ -259,19 +271,20 @@ Inhomogeneous to homogeneous time series conversion is not trivial and it would 
 This is possible thanks to convolution operators: Calculating these must be efficient, and therefore a full convolution is not feasible! But thanks to the *exponential moving average* (EMA) operator which can be constructed very quickly in an interative fashion, we can build a pleathora of complex but fast operators based upon it.
 
 The basic definition of `EMA[τ;z]` is
+
 ```
 EMA (t@{n}) := μ·EMA (t@{n-1}) + (1-μ)·z@{n-1};
 ```
+
 with
+
 ```
 μ := exp (-α); α := (t@{n} - t@{n-1})/τ;
 ```
+
 where
 
 + `τ` is a time range used here for scaling (between one minute and mutiple weeks); and
 + `z` is an inhomogeneous times series with `z@{n-1}` representing the previous tick.
 
 So `EMA (t@{n})` is then the *wheighted average* of the last EMA and the previous tick. We've used here the *previous point* definiton which relies on the previous tick `z@{n-1}` instead of the next tick `z@{n}`.
-
-### Strategy
-...
