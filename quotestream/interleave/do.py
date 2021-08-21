@@ -27,13 +27,15 @@ def get_args(defaults: dict=frozenset({}),
 
 def get_args_parser(defaults: dict=frozenset({})) -> argparse.ArgumentParser:
 
-    parser = argparse.ArgumentParser(description=
+    parser = argparse.ArgumentParser(
+        description=
         """
         Generic interleaver: Applies a function to parameters, that do not all
         to be present in the current tick. In case of missing parameter values
         the most recent value is used - if possible; otherwise then the default
         result is returned.
-        """, epilog=
+        """,
+        epilog=
         """
         The interleaver is useful when two sub-streams have been merged and the
         corresponding quotes do *not* share all attributes: By using the most
